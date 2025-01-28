@@ -1,0 +1,248 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  digital-ingest-pipeline
+
+  Pipeline for ingesting packages of born-digital and digitized content.
+
+Mappings:
+  DeployResources:
+    CloudFormationBucket:
+      dev: rac-dev-cloudformation-apps
+      prod: rac-prod-cloudformation-apps
+    CloudFormationBucketPrefix:
+      dev: digital_ingest_pipeline
+      prod: digital_ingest_pipeline
+    SecurityGroup:
+      dev: "sg-0f98d77d7bb7b4ce6"
+      prod: "sg-0a568e8a6ff39b710" 
+    Subnet:
+      dev: "subnet-098df07b0ab91cb1d"
+      prod: "subnet-02e68cd17b1abfc14"
+  NotificationsLambda:
+    ZodiacBaseurl: # TODO
+      dev: ""
+      prod: ""
+  TriggerLambda:
+    ECSSubnetName: # TODO 
+      dev: ""
+      prod: ""
+  UrsaMajor:
+    SourceBucketName: # TODO
+      dev: ""
+      prod: ""
+    DigitizationEfsId: # TODO
+      dev: ""
+      prod: ""
+    DigitizationEfsAccessPointId: # TODO
+      dev: ""
+      prod: ""
+    DigitizationRootPath:
+      dev: "pictor"
+      prod: "pictor"
+    DigitizationPath:
+      dev: "src"
+      prod: "src"
+    DigitizationUrl: # TODO
+      dev: "https://zodiac.dev.rockarch.org:"
+      prod: "https://zodiac.rockarch.org:"  
+
+Parameters:
+  Environment:
+    Type: String
+    Description: The environment in which the infrastructure should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+    Default: dev
+
+Resources:
+  # Temporary Storage
+  TemporaryStorage:
+    Type: AWS::EFS::FileSystem
+    Properties: 
+      Encrypted: true
+      FileSystemTags: 
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-temporary-storage
+      LifecyclePolicies: 
+        - TransitionToIA: AFTER_30_DAYS
+      PerformanceMode: generalPurpose
+      ThroughputMode: elastic
+
+  # Temporary Storage Access Point
+  TemporaryStorageAccessPoint:
+    Type: 'AWS::EFS::AccessPoint'
+    Properties:
+      AccessPointTags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-temporary-storage
+      FileSystemId: !Ref TemporaryStorage
+      PosixUser:
+        Uid: "1000"
+        Gid: "1000"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "755"
+        Path: "/digital-ingest"
+  
+  # ECS Cluster
+  DigitalIngestECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties: 
+      CapacityProviders: 
+        - FARGATE
+      ClusterName: DigitalIngestCluster
+      Tags: 
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-ecs-cluster
+
+  # Ursa Major
+  UrsaMajor:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "ursa_major_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: ursa_major
+        EfsId: !Ref TemporaryStorage
+        EfsAccessPointId: !Ref TemporaryStorageAccessPoint
+        EfsRootPath: '/efs'
+        EventsTopicArn: !Ref DigitalIngestTopic
+        StoragePath: 'storage'
+        TemporaryPath: 'ursa_major_tmp'
+        SourceBucketName: !FindInMap [UrsaMajor, SourceBucketName, !Ref Environment]
+        DigitizationEfsId: !FindInMap [UrsaMajor, DigitizationEfsId, !Ref Environment]
+        DigitizationEfsAccessPointId: !FindInMap [UrsaMajor, DigitizationEfsAccessPointId, !Ref Environment]
+        DigitizationRootPath: !FindInMap [UrsaMajor, DigitizationRootPath, !Ref Environment]
+        DigitizationPath: !FindInMap [UrsaMajor, DigitizationPath, !Ref Environment]
+        DigitizationUrl: !FindInMap [UrsaMajor, DigitizationUrl, !Ref Environment]
+
+  DigitizationUrl:
+    Type: String
+    Description: URL to post to to trigger further processing for packages of digitized content.
+
+  # Fornax
+  Fornax:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "fornax_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: fornax
+        EfsId: !Ref TemporaryStorage
+        EfsAccessPointId: !Ref TemporaryStorageAccessPoint
+        EfsRootPath: '/efs'
+        # What else?
+
+  # Aquarius
+  Aquarius:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "aquarius_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: aquarius
+        EfsId: !Ref TemporaryStorage
+        EfsAccessPointId: !Ref TemporaryStorageAccessPoint
+        EfsRootPath: '/efs'
+        # What else?
+
+  # SNS topic
+  DigitalIngestTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: digital-ingest-events
+  
+  # SQS Notifications Queue
+  DigitalIngestNotificationsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-notifications-queue
+
+  # SQS Trigger Queue
+  DigitalIngestTriggerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-notifications-queue
+  
+  # Notifications Lambda
+  DigitalIngestNotificationsLambda:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "digital_ingest_notifications.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: digital_ingest_notifications
+        EventsTopicArn: !Ref DigitalIngestTopic
+        NotificationsQueueArn: !Ref DigitalIngestNotificationsQueue
+        ZodiacBaseurl: !FindInMap [NotificationsLambda, ZodiacBaseurl, !Ref Environment]
+
+  # Trigger Lambda
+  DigitalIngestTriggerLambda:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "digital_ingest_trigger.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: digital_ingest_trigger
+        ECSClusterName: !Ref DigitalIngestECSCluster
+        ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
+        ParentStackName: !Ref AWS::StackName
+        SourceBucketName: !FindInMap [UrsaMajor, SourceBucketName, !Ref Environment]
+        TriggerQueueArn: !Ref DigitalIngestTopicQueue

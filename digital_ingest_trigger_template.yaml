@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  digital-ingest-trigger
+
+  Triggers next event in digital ingest pipeline.
+
+Parameters:
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which the application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  ECSClusterName:
+    Type: String
+    Description: Name of the ECS Cluster in which the Task should be triggered.
+  ECSSubnetName:
+    Type: AWS::EC2::Subnet::Id
+    Description: Name of the subnet in which the ECS Task should be triggered.
+  ParentStackName:
+    Type: String
+    Description: Name of the parent stack
+  SourceBucketName:
+    Type: String
+    Description: Name of source bucket
+  TriggerQueueArn:
+    Type: String 
+    Description: ARN of trigger SQS Queue
+
+Resources:
+  DigitalIngestTriggerFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: IAM Role which supports running ECS Tasks and Services.
+      Policies: 
+        - PolicyName: DigitalIngestTriggerRunECSTaskPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'ecs:RunTask'
+                Resource:
+                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/aquarius'
+                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/fornax'
+                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/ursa_major'
+              - Effect: Allow
+                Action: 'ecs:DescribeServices'
+                Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
+              - Effect: Allow
+                Action: 'ecs:UpdateService'
+                Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
+              - Effect: Allow
+                Action: 'iam:PassRole'
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ParentStackName}-*'
+                Condition:
+                  StringLike:
+                    'iam:PassedToService': 'ecs-tasks.amazonaws.com'
+        - PolicyName: DigitalIngestTriggerParameterStorePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}*'
+        - PolicyName: DigitalIngestTriggerLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt TriggerLogGroup.Arn
+        - PolicyName: DigitalIngestTriggerSQSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sqs:ReceiveMessage'
+                  - 'sqs:DeleteMessage'
+                  - 'sqs:GetQueueAttributes'
+                Resource: !Ref TriggerQueueArn
+
+  ECSClusterParam:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
+      Description: Name of ECS Cluster in which Task should be triggered.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ECS_CLUSTER
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ECSClusterName
+  ECSSubnetParam:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
+      Description: Subnet in which ECS Task should be triggered.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ECS_SUBNET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ECSSubnetName
+
+  DigitalIngestTriggerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}.zip'
+      FunctionName: !Ref ApplicationName
+      Handler: handle_digital_ingest_trigger.lambda_handler
+      Role: !GetAtt DigitalIngestTriggerFunctionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          ENV: !Ref ApplicationEnvironment
+          APP_CONFIG_PATH: !Ref ApplicationName
+          AWS_REGION: !Ref AWS::Region
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  TriggerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
+      RetentionInDays: 90
+
+  # Allow S3 to trigger Lambda
+  DigitalIngestTriggerS3FunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DigitalIngestTriggerFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
+
+  # Subscribe Lambda to SQS
+  DigitalIngestNotificationsEventSourceMapping:
+    Type: AWS::Lambda:EventSourceMapping
+    Properties:
+      EventSourceArn: !Ref TriggerQueueArn
+      FunctionName: !GetAtt DigitalIngestNotificationsFunction.Arn
+
+Outputs:
+  DigitizedImageTriggerFunction:
+    Description: "Digital Ingest Trigger Lambda Function ARN"
+    Value: !GetAtt DigitalIngestTriggerFunction.Arn
