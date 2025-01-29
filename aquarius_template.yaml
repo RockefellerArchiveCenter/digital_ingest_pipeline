@@ -1,0 +1,211 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Aquarius
+
+  Transforms data data from Aurora and makes Accessions, 
+  Archival Objects, and Digital Objects in ArchivesSpace.
+
+Parameters:
+  ContainerAccountId:
+    Type: String
+    Description: Account ID under which container repository is located.
+    Default: "817658541382"
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  EfsId:
+    Type: String
+    Description: Identifier for temporary storage EFS.
+  EfsAccessPointId:
+    Type: String
+    Description: Identifier for temporary storage EFS access point.
+  EfsRootPath:
+    Type: String
+    Description: Root path at which EFS is mounted.
+  StoragePath:
+    Type: String
+    Description: Location in EFS mount at which source files are stored.
+  TemporaryPath:
+    Type: String
+    Description: Location in EFS mount at which files are unpacked.
+  SourceBucketName:
+    Type: String
+    Description: Name of S3 bucket to which packaged files should be delivered.
+  DigitizationEfsId:
+    Type: String
+    Description: Identifier for digitization delivery EFS.
+  DigitizationEfsAccessPointId:
+    Type: String
+    Description: Identifier for digitization delivery EFS access point.
+  DigitizationRootPath:
+    Type: String
+    Description: Root path for digitized delivery.
+  DigitizationPath:
+    Type: String
+    Description: Path to deliver packages of digitized content for further processing.
+  DigitizationUrl:
+    Type: String
+    Description: URL to post to to trigger further processing for packages of digitized content.
+  EventsTopicArn:
+    Type: String
+    Description: ARN for events SNS Topic
+
+Resources:
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 
+                  - !GetAtt AquariusLogGroup.Arn
+        - PolicyName: EcrPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                Resource: 
+                  - !Sub arn:aws:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource: '*'
+
+  AquariusUser:
+    Type: AWS::IAM::User
+
+  AquariusUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      UserName: !Ref AquariusUser
+
+  AquariusRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt AquariusUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows access to SSM parameters.'
+      Policies:
+        - PolicyName: AquariusSSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath'
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+
+  AquariusLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
+      RetentionInDays: 90
+  
+  AquariusEcsTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Cpu: "1024"
+      Memory: "3072"
+      ContainerDefinitions: 
+        - Name: !Ref ApplicationName
+          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
+          Essential: true
+          Environment:
+            - Name: ENV
+              Value: !Ref ApplicationEnvironment
+            - Name: APP_CONFIG_PATH
+              Value: !Ref ApplicationName
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_ROLE_ARN
+              Value: !GetAtt DigitizedAvPackagingRole.Arn
+            - Name: STORAGE_DIR
+              Value: !Sub '${EfsRootPath}/${StoragePath}'
+            - Name: TMP_DIR
+              Value: !Sub '${EfsRootPath}/${TemporaryPath}'
+            - Name: DIGITIZATION_URL
+              Value: !Ref DigitizationUrl
+            - Name: DIGITIZATION_PATH
+              Value: !Sub '${DigitizationRootPath}/${DigitizationPath}'
+            - Name: AWS_SOURCE_BUCKET
+              Value: !Ref SourceBucketName
+            - Name: AWS_SNS_TOPIC
+              Value: !Ref EventsTopicArn
+
+          MountPoints:
+            - SourceVolume: efs
+              ContainerPath: !Ref EfsRootPath
+              ReadOnly: false
+            - SourceVolume: digitization
+              ContainerPath: !Ref DigitizationRootPath
+              ReadOnly: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              "awslogs-group": !Ref AquariusLogGroup
+              "awslogs-region": !Ref AWS::Region
+              "awslogs-stream-prefix": "ecs"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Family: !Ref ApplicationName
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Volumes: 
+        - Name: efs
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref EfsId
+            RootDirectory: /
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !Ref EfsAccessPointId
+              IAM: DISABLED
+        - Name: digitization
+          EFSVolumeConfiguration:
+            FilesystemID: !Ref DigitizationEfsId
+            RootDirectory: /
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !Ref DigitizationEfsAccessPointId
+              IAM: DISABLED
+
+Outputs:
+  AquariusArn:
+    Description: Aquarius ECS Task Definition ARN
+    Value: !Ref AquariusEcsTask
