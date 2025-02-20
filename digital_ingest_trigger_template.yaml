@@ -157,6 +157,7 @@ Resources:
       FunctionName: !Ref DigitalIngestTriggerFunction
       Principal: s3.amazonaws.com
       SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
+      SourceAccount: !Ref AWS::AccountId
 
   # Subscribe Lambda to SQS
   DigitalIngestNotificationsEventSourceMapping:
