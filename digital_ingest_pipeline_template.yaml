@@ -19,32 +19,32 @@ Mappings:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-02e68cd17b1abfc14"
   NotificationsLambda:
-    ZodiacBaseurl: # TODO
-      dev: ""
-      prod: ""
+    ZodiacBaseurl:
+      dev: "https://zodiac.dev.rockarch.org/api"
+      prod: "https://zodiac.rockarch.org/api"
   TriggerLambda:
-    ECSSubnetName: # TODO 
-      dev: ""
-      prod: ""
+    ECSSubnetName:
+      dev: "subnet-098df07b0ab91cb1d"
+      prod: "subnet-0102189437e2babd8"
   UrsaMajor:
-    SourceBucketName: # TODO
-      dev: ""
-      prod: ""
-    DigitizationEfsId: # TODO
-      dev: ""
-      prod: ""
-    DigitizationEfsAccessPointId: # TODO
-      dev: ""
-      prod: ""
+    SourceBucketName:
+      dev: "rac-dev-digital-ingest-upload"
+      prod: "rac-prod-digital-ingest-upload"
+    DigitizationEfsId:
+      dev: "fs-4ecb5eae"
+      prod: "fs-b9197b5a"
+    DigitizationEfsAccessPointId: 
+      dev: "fsap-0d530b00165a90a27"
+      prod: "" # TODO
     DigitizationRootPath:
       dev: "pictor"
       prod: "pictor"
     DigitizationPath:
       dev: "src"
       prod: "src"
-    DigitizationUrl: # TODO
-      dev: "https://zodiac.dev.rockarch.org:"
-      prod: "https://zodiac.rockarch.org:"  
+    DigitizationUrl:
+      dev: "https://zodiac.dev.rockarch.org:8012"
+      prod: "https://zodiac.rockarch.org:8012"  
 
 Parameters:
   Environment:
@@ -183,7 +183,7 @@ Resources:
   DigitalIngestTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: digital-ingest-events
+      TopicName: digital-ingest-notifications    
   
   # SQS Notifications Queue
   DigitalIngestNotificationsQueue:
@@ -204,6 +204,26 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-notifications-queue
+
+  # SNS Subscription for SQS Notifications Queue
+  DigitalIngestNotificationsQueueSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !GetAtt DigitalIngestTopic.Arn
+      Protocol: sqs
+      Endpoint: !GetAtt DigitalIngestNotificationsQueue.Arn
+      FilterPolicy: '"requested_status": [{"exists": false}]'
+      FilterPolicyScope: MessageAttributes
+
+  # SNS Subscription for SQS Trigger Queue
+  DigitalIngestTriggerQueueSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !GetAtt DigitalIngestTopic.Arn
+      Protocol: sqs
+      Endpoint: !GetAtt DigitalIngestTriggerQueue.Arn
+      FilterPolicy: '"requested_status": [{"exists": true}]'
+      FilterPolicyScope: MessageAttributes
   
   # Notifications Lambda
   DigitalIngestNotificationsLambda:
@@ -215,7 +235,7 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "digital_ingest_notifications.yaml"
+          "digital_ingest_notifications_template.yaml"
           ]
         ]
       Parameters:
@@ -235,7 +255,29 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "digital_ingest_trigger.yaml"
+          "digital_ingest_trigger_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: digital_ingest_trigger
+        ECSClusterName: !Ref DigitalIngestECSCluster
+        ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
+        ParentStackName: !Ref AWS::StackName
+        SourceBucketName: !FindInMap [UrsaMajor, SourceBucketName, !Ref Environment]
+        TriggerQueueArn: !Ref DigitalIngestTopicQueue
+
+  # Webhook Lambda
+  DigitalIngestWebhookLambda:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "digital_ingest_webhook_template.yaml"
           ]
         ]
       Parameters:
