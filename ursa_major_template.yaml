@@ -146,8 +146,6 @@ Resources:
           Environment:
             - Name: ENV
               Value: !Ref ApplicationEnvironment
-            - Name: APP_CONFIG_PATH
-              Value: !Ref ApplicationName
             - Name: AWS_REGION
               Value: !Ref AWS::Region
             - Name: AWS_ROLE_ARN
