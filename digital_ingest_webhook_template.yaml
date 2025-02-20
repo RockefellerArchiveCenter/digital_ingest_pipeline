@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  digital-ingest-trigger
+
+  Provides an endpoint for Archivematica post-store callbacks.
+
+Parameters:
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which the application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  ParentStackName:
+    Type: String
+    Description: Name of the parent stack
+  NotificationsTopicArn:
+    Type: String
+    Description: ARN for the SNS queue to post messages to
+
+Resources:
+  DigitalIngestWebhookFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: IAM Role which supports running ECS Tasks and Services.
+      Policies: 
+        - PolicyName: DigitalIngestWebhookParameterStorePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}*'
+        - PolicyName: DigitalIngestWebhookLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt WebhookLogGroup.Arn
+        - PolicyName: DigitalIngestWebhookSNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource: !Ref NotificationsTopicArn
+
+  DigitalIngestWebhookFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}.zip'
+      FunctionName: !Ref ApplicationName
+      Handler: handle_http_request.lambda_handler
+      Role: !GetAtt DigitalIngestWebhookFunctionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          ENV: !Ref ApplicationEnvironment
+          APP_CONFIG_PATH: !Ref ApplicationName
+          AWS_REGION: !Ref AWS::Region
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  DigitalIngestWebhookUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !Ref DigitalIngestWebhookFunction
+
+  WebhookLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
+      RetentionInDays: 90
+
+Outputs:
+  DigitizedImageTriggerFunction:
+    Description: "Digital Ingest Trigger Lambda Function ARN"
+    Value: !GetAtt DigitalIngestTriggerFunction.Arn
