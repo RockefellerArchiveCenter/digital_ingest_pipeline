@@ -26,7 +26,7 @@ Mappings:
     ECSSubnetName:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-0102189437e2babd8"
-  UrsaMajor:
+  DiscoveryService:
     SourceBucketName:
       dev: "rac-dev-digital-ingest-upload"
       prod: "rac-prod-digital-ingest-upload"
@@ -104,8 +104,8 @@ Resources:
         - Key: Application
           Value: digital-ingest-ecs-cluster
 
-  # Ursa Major
-  UrsaMajor:
+  # Discovery ECS Task
+  DiscoveryTask:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
@@ -114,31 +114,27 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "ursa_major_template.yaml"
+          "digital_ingest_discovery_template.yaml"
           ]
         ]
       Parameters:
         ApplicationEnvironment: !Ref Environment
-        ApplicationName: ursa_major
+        ApplicationName: digital_ingest_discovery
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
         EventsTopicArn: !Ref DigitalIngestTopic
         StoragePath: 'storage'
-        TemporaryPath: 'ursa_major_tmp'
-        SourceBucketName: !FindInMap [UrsaMajor, SourceBucketName, !Ref Environment]
-        DigitizationEfsId: !FindInMap [UrsaMajor, DigitizationEfsId, !Ref Environment]
-        DigitizationEfsAccessPointId: !FindInMap [UrsaMajor, DigitizationEfsAccessPointId, !Ref Environment]
-        DigitizationRootPath: !FindInMap [UrsaMajor, DigitizationRootPath, !Ref Environment]
-        DigitizationPath: !FindInMap [UrsaMajor, DigitizationPath, !Ref Environment]
-        DigitizationUrl: !FindInMap [UrsaMajor, DigitizationUrl, !Ref Environment]
+        TemporaryPath: 'digital_ingest_discovery_tmp'
+        SourceBucketName: !FindInMap [DiscoveryService, SourceBucketName, !Ref Environment]
+        DigitizationEfsId: !FindInMap [DiscoveryService, DigitizationEfsId, !Ref Environment]
+        DigitizationEfsAccessPointId: !FindInMap [DiscoveryService, DigitizationEfsAccessPointId, !Ref Environment]
+        DigitizationRootPath: !FindInMap [DiscoveryService, DigitizationRootPath, !Ref Environment]
+        DigitizationPath: !FindInMap [DiscoveryService, DigitizationPath, !Ref Environment]
+        DigitizationUrl: !FindInMap [DiscoveryService, DigitizationUrl, !Ref Environment]
 
-  DigitizationUrl:
-    Type: String
-    Description: URL to post to to trigger further processing for packages of digitized content.
-
-  # Fornax
-  Fornax:
+  # Assembly ECS Task
+  AssemblyTask:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
@@ -147,19 +143,19 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "fornax_template.yaml"
+          "digital_ingest_assembly_template.yaml"
           ]
         ]
       Parameters:
         ApplicationEnvironment: !Ref Environment
-        ApplicationName: fornax
+        ApplicationName: digital_ingest_assembly
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
         # What else?
 
-  # Aquarius
-  Aquarius:
+  # Transformation ECS Task
+  TransformationTask:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
@@ -168,12 +164,12 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "aquarius_template.yaml"
+          "digital_ingest_transformation_template.yaml"
           ]
         ]
       Parameters:
         ApplicationEnvironment: !Ref Environment
-        ApplicationName: aquarius
+        ApplicationName: digital_ingest_transformation
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
@@ -226,7 +222,7 @@ Resources:
       FilterPolicyScope: MessageAttributes
   
   # Notifications Lambda
-  DigitalIngestNotificationsLambda:
+  NotificationsLambda:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
@@ -246,7 +242,7 @@ Resources:
         ZodiacBaseurl: !FindInMap [NotificationsLambda, ZodiacBaseurl, !Ref Environment]
 
   # Trigger Lambda
-  DigitalIngestTriggerLambda:
+  TriggerLambda:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
@@ -264,11 +260,11 @@ Resources:
         ECSClusterName: !Ref DigitalIngestECSCluster
         ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
         ParentStackName: !Ref AWS::StackName
-        SourceBucketName: !FindInMap [UrsaMajor, SourceBucketName, !Ref Environment]
-        TriggerQueueArn: !Ref DigitalIngestTopicQueue
+        SourceBucketName: !FindInMap [DiscoveryService, SourceBucketName, !Ref Environment]
+        TriggerQueueArn: !Ref DigitalIngestTriggerQueue
 
   # Webhook Lambda
-  DigitalIngestWebhookLambda:
+  WebhookLambda:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
@@ -282,9 +278,6 @@ Resources:
         ]
       Parameters:
         ApplicationEnvironment: !Ref Environment
-        ApplicationName: digital_ingest_trigger
-        ECSClusterName: !Ref DigitalIngestECSCluster
-        ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
+        ApplicationName: digital_ingest_webhook
         ParentStackName: !Ref AWS::StackName
-        SourceBucketName: !FindInMap [UrsaMajor, SourceBucketName, !Ref Environment]
-        TriggerQueueArn: !Ref DigitalIngestTopicQueue
+        NotificationsTopicArn: !Ref DigitalIngestTopic
