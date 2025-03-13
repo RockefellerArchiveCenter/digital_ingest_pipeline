@@ -127,6 +127,8 @@ Resources:
         S3Key: !Sub '${ApplicationName}.zip'
       FunctionName: !Ref ApplicationName
       Handler: handle_digital_ingest_trigger.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref TriggerLogGroup
       Role: !GetAtt DigitalIngestTriggerFunctionRole.Arn
       Runtime: python3.11
       Timeout: 10

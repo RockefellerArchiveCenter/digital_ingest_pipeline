@@ -109,6 +109,8 @@ Resources:
         S3Key: !Sub '${ApplicationName}.zip'
       FunctionName: !Ref ApplicationName
       Handler: handle_digital_ingest_notifications.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref NotificationsLogGroup
       Role: !GetAtt DigitalIngestNotificationsRole.Arn
       Runtime: python3.11
       Timeout: 30

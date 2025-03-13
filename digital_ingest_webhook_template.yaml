@@ -71,6 +71,8 @@ Resources:
         S3Key: !Sub '${ApplicationName}.zip'
       FunctionName: !Ref ApplicationName
       Handler: handle_http_request.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref WebhookLogGroup
       Role: !GetAtt DigitalIngestWebhookFunctionRole.Arn
       Runtime: python3.11
       Timeout: 10
