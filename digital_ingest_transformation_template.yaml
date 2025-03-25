@@ -1,11 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Aquarius
+  digital-ingest-transformation
 
-  Transforms data data from Aurora and makes Accessions, 
+  Transforms data from Aurora and makes Accessions,
   Archival Objects, and Digital Objects in ArchivesSpace.
 
 Parameters:
+# The AWS account that hosts the Amazon Elastic Container Registry (ECR) repository
   ContainerAccountId:
     Type: String
     Description: Account ID under which container repository is located.
@@ -16,9 +17,12 @@ Parameters:
     AllowedValues:
       - dev
       - prod
+    # Do we need a default defined like in digital_ingest_pipeline_template.yml?
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
+
+  # Elastic File System (EFS) parameters for temporary storage of files as they are transformed and moved through the pipeline
   EfsId:
     Type: String
     Description: Identifier for temporary storage EFS.
@@ -34,9 +38,13 @@ Parameters:
   TemporaryPath:
     Type: String
     Description: Location in EFS mount at which files are unpacked.
+
+  # S3 bucket where transformed files are stored
   SourceBucketName:
     Type: String
     Description: Name of S3 bucket to which packaged files should be delivered.
+
+  # Elastic File System (EFS) parameters for digitization delivery for packages that are not from Aurora
   DigitizationEfsId:
     Type: String
     Description: Identifier for digitization delivery EFS.
@@ -57,6 +65,7 @@ Parameters:
     Description: ARN for events SNS Topic
 
 Resources:
+  # An ECS task definition that defines the container
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -75,72 +84,72 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
-                Resource: 
-                  - !GetAtt AquariusLogGroup.Arn
+                Resource:
+                  - !GetAtt TransformationLogGroup.Arn
         - PolicyName: EcrPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - 'ecr:BatchCheckLayerAvailability'
                   - 'ecr:GetDownloadUrlForLayer'
                   - 'ecr:BatchGetImage'
-                Resource: 
+                Resource:
                   - !Sub arn:aws:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
               - Effect: Allow
                 Action:
                   - 'ecr:GetAuthorizationToken'
                 Resource: '*'
 
-  AquariusUser:
+  TransformationUser:
     Type: AWS::IAM::User
 
-  AquariusUserAccessKey:
+  TransformationUserAccessKey:
     Type: AWS::IAM::AccessKey
-    Properties: 
-      UserName: !Ref AquariusUser
+    Properties:
+      UserName: !Ref TransformationUser
 
-  AquariusRole:
+  TransformationRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
               AWS:
-                - !GetAtt AquariusUser.Arn
+                - !GetAtt TransformationUser.Arn
             Action:
               - 'sts:AssumeRole'
       Description: 'Allows access to SSM parameters.'
       Policies:
-        - PolicyName: AquariusSSMPolicy
+        - PolicyName: TransformationSSMPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - 'ssm:GetParametersByPath'
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
 
-  AquariusLogGroup:
+  TransformationLogGroup:
     Type: AWS::Logs::LogGroup
-    Properties: 
+    Properties:
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
-  
-  AquariusEcsTask:
+
+  TransformationEcsTask:
     Type: AWS::ECS::TaskDefinition
-    Properties: 
+    Properties:
       Cpu: "1024"
       Memory: "3072"
-      ContainerDefinitions: 
+      ContainerDefinitions:
         - Name: !Ref ApplicationName
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           Essential: true
@@ -176,7 +185,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              "awslogs-group": !Ref AquariusLogGroup
+              "awslogs-group": !Ref TransformationLogGroup
               "awslogs-region": !Ref AWS::Region
               "awslogs-stream-prefix": "ecs"
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
@@ -187,7 +196,7 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
-      Volumes: 
+      Volumes:
         - Name: efs
           EFSVolumeConfiguration:
             FilesystemId: !Ref EfsId
@@ -206,6 +215,6 @@ Resources:
               IAM: DISABLED
 
 Outputs:
-  AquariusArn:
-    Description: Aquarius ECS Task Definition ARN
-    Value: !Ref AquariusEcsTask
+  TransformationArn:
+    Description: Transformation ECS Task Definition ARN
+    Value: !Ref TransformationEcsTask
