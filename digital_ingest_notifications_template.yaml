@@ -75,7 +75,7 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
@@ -86,7 +86,7 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - 'sqs:ReceiveMessage'
                   - 'sqs:DeleteMessage'
                   - 'sqs:GetQueueAttributes'
@@ -96,7 +96,7 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - 'sns:Publish'
                 Resource:
                   - !Ref EventsTopicArn
@@ -141,6 +141,6 @@ Resources:
       FunctionName: !GetAtt DigitalIngestNotificationsFunction.Arn
 
 Outputs:
-  DigitalIngesteNotificationsFunction:
+  DigitalIngestNotificationsFunction:
     Description: 'Digital Ingest Notifications Lambda Function ARN'
     Value: !GetAtt DigitalIngestNotificationsFunction.Arn
