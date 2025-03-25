@@ -108,6 +108,7 @@ Resources:
 
   TransformationUser:
     Type: AWS::IAM::User
+    UserName: TransformationUser
 
   TransformationUserAccessKey:
     Type: AWS::IAM::AccessKey
