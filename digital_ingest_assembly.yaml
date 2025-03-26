@@ -9,7 +9,7 @@ Parameters:
   ContainerAccountId:
     Type: String
     Description: Account ID under which container repository is located.
-    Default: "817658541382" #does the value string need to change?
+    Default: "817658541382"
   ApplicationEnvironment:
     Type: String
     Description: Environment in which application should be deployed.
@@ -29,36 +29,20 @@ Parameters:
   EfsRootPath:
     Type: String
     Description: Root path at which EFS is mounted.
-  StoragePath:
+  SourcePath:
     Type: String
     Description: Location in EFS mount at which source files are stored.
   TemporaryPath:
     Type: String
     Description: Location in EFS mount at which files are unpacked.
-  SourceBucketName:
+  DestinationPath:
     Type: String
-    Description: Name of S3 bucket to which packaged files should be delivered.
-  DigitizationEfsId:
-    Type: String
-    Description: Identifier for digitization delivery EFS.
-  DigitizationEfsAccessPointId:
-    Type: String
-    Description: Identifier for digitization delivery EFS access point.
-  DigitizationRootPath:
-    Type: String
-    Description: Root path for digitized delivery.
-  DigitizationPath:
-    Type: String
-    Description: Path to deliver packages of digitized content for further processing.
-  DigitizationUrl:
-    Type: String
-    Description: URL to post to to trigger further processing for packages of digitized content.
+    Description: Location in EFS mount at which destination files are stored.
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
 
 Resources:
-  Resources:
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -107,7 +91,7 @@ Resources:
     Properties: 
       UserName: !Ref AssemblyUser
 
-  AssemblyRole:
+  AssemblySsmRole:
     Type: AWS::IAM::Role
     Properties: 
       AssumeRolePolicyDocument:
@@ -131,6 +115,30 @@ Resources:
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
 
+  AssemblySnsRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt AssemblyUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows user to send SNS messages.'
+      Policies:
+        - PolicyName: AssemblySNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref EventsTopicArn
+
   AssemblyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
@@ -144,34 +152,28 @@ Resources:
       Memory: "3072"
       ContainerDefinitions: 
         - Name: !Ref ApplicationName
-          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
+          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:${ApplicationEnvironment}"
           Essential: true
           Environment:
-            - Name: ENV
+            - Name: ENVIRONMENT
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
-            - Name: AWS_ROLE_ARN
-              Value: !GetAtt DigitizedAvPackagingRole.Arn
-            - Name: STORAGE_DIR
-              Value: !Sub '${EfsRootPath}/${StoragePath}'
+            - Name: SRC_DIR
+              Value: !Sub '${EfsRootPath}/${SourcePath}'
             - Name: TMP_DIR
               Value: !Sub '${EfsRootPath}/${TemporaryPath}'
-            - Name: DIGITIZATION_URL
-              Value: !Ref DigitizationUrl
-            - Name: DIGITIZATION_PATH
-              Value: !Sub '${DigitizationRootPath}/${DigitizationPath}'
-            - Name: AWS_SOURCE_BUCKET
-              Value: !Ref SourceBucketName
-            - Name: AWS_SNS_TOPIC
+            - Name: DEST_DIR
+              Value: !Sub '${EfsRootPath}/${DestinationPath}'
+            - Name: SNS_ROLE_ARN
+              Value: !GetAtt AssemblySnsRole.Arn
+            - Name: SNS_TOPIC
               Value: !Ref EventsTopicArn
-
+            - Name: SSM_ROLE_ARN
+              Value: !GetAtt AssemblySsmRole.Arn
           MountPoints:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
-              ReadOnly: false
-            - SourceVolume: digitization
-              ContainerPath: !Ref DigitizationRootPath
               ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
@@ -195,14 +197,6 @@ Resources:
             TransitEncryption: ENABLED
             AuthorizationConfig:
               AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
-        - Name: digitization
-          EFSVolumeConfiguration:
-            FilesystemID: !Ref DigitizationEfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref DigitizationEfsAccessPointId
               IAM: DISABLED
 
 Outputs:
