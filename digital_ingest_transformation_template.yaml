@@ -21,7 +21,54 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-
+  ARCHIVEMATICA_SS_API_KEY:
+    Type: String
+    Description: API Key for Archivematica Storage Service
+  ARCHIVEMATICA_SS_USER_NAME:
+    Type: String
+    Description: Archivematica Storage Service Username
+  ARCHIVEMATICA_SS_URL: 
+    Type: String
+    Description: URL for the Archivematica Storage Service
+  ZODIAC_BASEURL:
+    Type: String
+    Description: BaseURL for the Zodiac Backend
+  AS_BASEURL:
+    Type: String
+    Description: BaseURL for the ArchivesSpace Backend
+  AS_USERNAME:
+    Type: String
+    Description: ArchivesSpace Username
+  AS_PASSWORD:
+    Type: String
+    Description: ArchivesSpace Password
+  AS_REPO_ID:
+    Type: Number
+    Description: ArchivesSpace Repository ID
+  AURORA_BASEURL:
+    Type: String
+    Description: Aurora BaseURL
+  AURORA_OAUTH_CLIENT_BASEURL:
+    Type: String
+    Description: Aurora OAuth Client BaseURL
+  AURORA_OAUTH_CLIENT_ID:
+    Type: String
+    Description: Aurora OAuth Client ID
+  AURORA_OAUTH_CLIENT_SECRET:
+    Type: String
+    Description: Aurora OAuth Client Secret
+  AURORA_ACCESSION_STARTED_STATUS:
+    Type: String
+    Description: Status of Aurora Accession at start
+  AURORA_PACKAGE_COMPLETE_STATUS:
+    Type: String
+    Description: Status of Aurora Accession at completion
+  IIIF_MANIFEST_BASEURL:
+    Type: String
+    Description: BaseURL for the IIIF manifest
+  DOWNLOAD_BASEURL:
+    Type: String
+    Description: BaseURL to download the object
   # Elastic File System (EFS) parameters for temporary storage of files as they are transformed and moved through the pipeline
   EfsId:
     Type: String
@@ -40,6 +87,7 @@ Parameters:
     Description: Location in EFS mount at which files are unpacked.
 
   # S3 bucket where transformed files are stored
+  # Not sure this is necessary. It's not being used anywhere AFAIK
   SourceBucketName:
     Type: String
     Description: Name of S3 bucket to which packaged files should be delivered.
@@ -60,11 +108,25 @@ Parameters:
   DigitizationUrl:
     Type: String
     Description: URL to post to to trigger further processing for packages of digitized content.
+
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
 
 Resources:
+  # I think we need this, but could be wrong.
+  SnsTopicParam:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
+      Description: ARN for SNS topic to send messages to.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/SNS_TOPIC
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref EventsTopicArn
+
   # An ECS task definition that defines the container
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
@@ -129,6 +191,15 @@ Resources:
               - 'sts:AssumeRole'
       Description: 'Allows access to SSM parameters.'
       Policies:
+        - PolicyName: TransformationSNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref EventsTopicArn
         - PolicyName: TransformationSSMPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -150,31 +221,41 @@ Resources:
     Properties:
       Cpu: "1024"
       Memory: "3072"
+      SNS_ROLE_ARN: !GetAtt TransformationRole.Arn
+      SSM_ROLE_ARN: !GetAtt TransformationRole.Arn
+      SNS_TOPIC: !Ref EventsTopicArn
+      # Currently don't know where this comes from/what it is
+      PACKAGE_ID: !Ref PackageID
       ContainerDefinitions:
         - Name: !Ref ApplicationName
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           Essential: true
           Environment:
-            - Name: ENV
+            Variables:
+              Env: !Ref ApplicationEnvironment
+              ARCHIVEMATICA_SS_API_KEY: !Ref ARCHIVEMATICA_SS_API_KEY
+              ARCHIVEMATICA_SS_USER_NAME: !Ref ARCHIVEMATICA_SS_USER_NAME
+              ARCHIVEMATICA_SS_URL: !Ref ARCHIVEMATICA_SS_URL
+              ZODIAC_BASEURL: !Ref ZODIAC_BASEURL
+              AS_BASEURL: !Ref AS_BASEURL
+              AS_USERNAME: !Ref AS_USERNAME
+              AS_PASSWORD: !Ref AS_PASSWORD
+              AS_REPO_ID: !Ref AS_REPO_ID
+              AURORA_BASEURL: !Ref AURORA_BASEURL
+              AURORA_OAUTH_CLIENT_BASEURL: !Ref AURORA_OAUTH_CLIENT_BASEURL
+              AURORA_OAUTH_CLIENT_ID: !Ref AURORA_OAUTH_CLIENT_ID
+              AURORA_OAUTH_CLIENT_SECRET: !Ref AURORA_OAUTH_CLIENT_SECRET
+              AURORA_ACCESSION_STARTED_STATUS: !Ref AURORA_ACCESSION_STARTED_STATUS
+              AURORA_PACKAGE_COMPLETE_STATUS: !Ref AURORA_PACKAGE_COMPLETE_STATUS
+              IIIF_MANIFEST_BASEURL: !Ref IIIF_MANIFEST_BASEURL
+              DOWNLOAD_BASEURL: !Ref DOWNLOAD_BASEURL
+              APP_CONFIG_PATH: !Ref ApplicationName
+              AWS_REGION: !Ref AWS::Region
+          Tags:
+            - Key: Environment
               Value: !Ref ApplicationEnvironment
-            - Name: APP_CONFIG_PATH
+            - Key: Application
               Value: !Ref ApplicationName
-            - Name: AWS_REGION
-              Value: !Ref AWS::Region
-            - Name: AWS_ROLE_ARN
-              Value: !GetAtt DigitizedAvPackagingRole.Arn
-            - Name: STORAGE_DIR
-              Value: !Sub '${EfsRootPath}/${StoragePath}'
-            - Name: TMP_DIR
-              Value: !Sub '${EfsRootPath}/${TemporaryPath}'
-            - Name: DIGITIZATION_URL
-              Value: !Ref DigitizationUrl
-            - Name: DIGITIZATION_PATH
-              Value: !Sub '${DigitizationRootPath}/${DigitizationPath}'
-            - Name: AWS_SOURCE_BUCKET
-              Value: !Ref SourceBucketName
-            - Name: AWS_SNS_TOPIC
-              Value: !Ref EventsTopicArn
 
           MountPoints:
             - SourceVolume: efs
