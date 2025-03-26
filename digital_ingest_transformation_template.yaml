@@ -221,18 +221,18 @@ Resources:
     Properties:
       Cpu: "1024"
       Memory: "3072"
-      SNS_ROLE_ARN: !GetAtt TransformationRole.Arn
-      SSM_ROLE_ARN: !GetAtt TransformationRole.Arn
-      SNS_TOPIC: !Ref EventsTopicArn
-      # Currently don't know where this comes from/what it is
-      PACKAGE_ID: !Ref PackageID
       ContainerDefinitions:
         - Name: !Ref ApplicationName
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           Essential: true
           Environment:
             Variables:
-              Env: !Ref ApplicationEnvironment
+              ENV: !Ref ApplicationEnvironment
+              SNS_ROLE_ARN: !GetAtt TransformationRole.Arn
+              SSM_ROLE_ARN: !GetAtt TransformationRole.Arn
+              SNS_TOPIC: !Ref EventsTopicArn
+              # Currently don't know where this comes from/what it is
+              PACKAGE_ID: !Ref PackageID
               ARCHIVEMATICA_SS_API_KEY: !Ref ARCHIVEMATICA_SS_API_KEY
               ARCHIVEMATICA_SS_USER_NAME: !Ref ARCHIVEMATICA_SS_USER_NAME
               ARCHIVEMATICA_SS_URL: !Ref ARCHIVEMATICA_SS_URL
