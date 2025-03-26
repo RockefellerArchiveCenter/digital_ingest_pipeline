@@ -6,7 +6,6 @@ Description: >
   Archival Objects, and Digital Objects in ArchivesSpace.
 
 Parameters:
-# The AWS account that hosts the Amazon Elastic Container Registry (ECR) repository
   ContainerAccountId:
     Type: String
     Description: Account ID under which container repository is located.
@@ -17,11 +16,10 @@ Parameters:
     AllowedValues:
       - dev
       - prod
-    default: dev
+    Default: dev
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  # Elastic File System (EFS) parameters for temporary storage of files as they are transformed and moved through the pipeline
   EfsId:
     Type: String
     Description: Identifier for temporary storage EFS.
@@ -31,7 +29,7 @@ Parameters:
   EfsRootPath:
     Type: String
     Description: Root path at which EFS is mounted.
-  PackageID:
+  PackageID: #Is this needed?
     Type: String
     Description: String representation of the package identifier
   EventsTopicArn:
@@ -52,7 +50,6 @@ Resources:
       Type: String
       Value: !Ref EventsTopicArn
 
-  # An ECS task definition that defines the container
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -166,7 +163,7 @@ Resources:
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           Essential: true
           Environment:
-            - Name: ENV
+            - Name: ENVIRONMENT
               Value: !Ref ApplicationEnvironment
             - Name: AWS_SNS_ROLE_ARN
               Value: !GetAtt TransformationSnsRole.Arn
@@ -174,7 +171,7 @@ Resources:
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-            - Name: PACKAGE_ID
+            - Name: PACKAGE_ID  #Is this needed?
               Value: !Ref PackageID
           Tags:
             - Key: Environment
