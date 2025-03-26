@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Description: >
   digital-ingest-transformation
 
@@ -79,36 +79,6 @@ Parameters:
   EfsRootPath:
     Type: String
     Description: Root path at which EFS is mounted.
-  StoragePath:
-    Type: String
-    Description: Location in EFS mount at which source files are stored.
-  TemporaryPath:
-    Type: String
-    Description: Location in EFS mount at which files are unpacked.
-
-  # S3 bucket where transformed files are stored
-  # Not sure this is necessary. It's not being used anywhere AFAIK
-  SourceBucketName:
-    Type: String
-    Description: Name of S3 bucket to which packaged files should be delivered.
-
-  # Elastic File System (EFS) parameters for digitization delivery for packages that are not from Aurora
-  # These are being called by the EFS resources, but not sure if that resource is necessary for this application
-  DigitizationEfsId:
-    Type: String
-    Description: Identifier for digitization delivery EFS.
-  DigitizationEfsAccessPointId:
-    Type: String
-    Description: Identifier for digitization delivery EFS access point.
-  DigitizationRootPath:
-    Type: String
-    Description: Root path for digitized delivery.
-  DigitizationPath:
-    Type: String
-    Description: Path to deliver packages of digitized content for further processing.
-  DigitizationUrl:
-    Type: String
-    Description: URL to post to to trigger further processing for packages of digitized content.
   PackageID:
     Type: String
     Description: String representation of the package identifier
@@ -180,7 +150,31 @@ Resources:
     Properties:
       UserName: !Ref TransformationUser
 
-  TransformationRole:
+  TransformationSnsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt TransformationUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows user to send SNS messages.'
+      Policies:
+        - PolicyName: TransformationSNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref EventsTopicArn
+
+  TransformationSsmRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -194,15 +188,6 @@ Resources:
               - 'sts:AssumeRole'
       Description: 'Allows access to SSM parameters.'
       Policies:
-        - PolicyName: TransformationSNSPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: 
-                  - 'sns:Publish'
-                Resource:
-                  - !Ref EventsTopicArn
         - PolicyName: TransformationSSMPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -231,8 +216,8 @@ Resources:
           Environment:
             Variables:
               ENV: !Ref ApplicationEnvironment
-              SNS_ROLE_ARN: !GetAtt TransformationRole.Arn
-              SSM_ROLE_ARN: !GetAtt TransformationRole.Arn
+              SNS_ROLE_ARN: !GetAtt TransformationSnsRole.Arn
+              SSM_ROLE_ARN: !GetAtt TransformationSsmRole.Arn
               SNS_TOPIC: !Ref EventsTopicArn
               PACKAGE_ID: !Ref PackageID
               ARCHIVEMATICA_SS_API_KEY: !Ref ArchivematicaSSAPIKey
@@ -263,9 +248,6 @@ Resources:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
               ReadOnly: false
-            - SourceVolume: digitization
-              ContainerPath: !Ref DigitizationRootPath
-              ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -288,14 +270,6 @@ Resources:
             TransitEncryption: ENABLED
             AuthorizationConfig:
               AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
-        - Name: digitization
-          EFSVolumeConfiguration:
-            FilesystemID: !Ref DigitizationEfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref DigitizationEfsAccessPointId
               IAM: DISABLED
 
 Outputs:
