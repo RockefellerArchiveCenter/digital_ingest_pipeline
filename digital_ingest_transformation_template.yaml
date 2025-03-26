@@ -21,54 +21,6 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  ArchivematicaSSAPIKey:
-    Type: String
-    Description: API Key for Archivematica Storage Service
-  ArchivematicaSSUserName:
-    Type: String
-    Description: Archivematica Storage Service Username
-  ArchivematicaSSUrl: 
-    Type: String
-    Description: URL for the Archivematica Storage Service
-  ZodiacBaseurl:
-    Type: String
-    Description: BaseURL for the Zodiac Backend
-  ASBaseurl:
-    Type: String
-    Description: BaseURL for the ArchivesSpace Backend
-  ASUsername:
-    Type: String
-    Description: ArchivesSpace Username
-  ASPassword:
-    Type: String
-    Description: ArchivesSpace Password
-  ASRepoID:
-    Type: Number
-    Description: ArchivesSpace Repository ID
-  AuroraBaseurl:
-    Type: String
-    Description: Aurora BaseURL
-  AuroraOauthClientBaseurl:
-    Type: String
-    Description: Aurora OAuth Client BaseURL
-  AuroraOauthClientID:
-    Type: String
-    Description: Aurora OAuth Client ID
-  AuroraOauthClientSecret:
-    Type: String
-    Description: Aurora OAuth Client Secret
-  AuroraAccessionStartedStatus:
-    Type: String
-    Description: Status of Aurora Accession at start
-  AuroraPackageCompleteStatus:
-    Type: String
-    Description: Status of Aurora Accession at completion
-  IIIFManifestBaseurl:
-    Type: String
-    Description: BaseURL for the IIIF manifest
-  DownloadBaseurl:
-    Type: String
-    Description: BaseURL to download the object
   # Elastic File System (EFS) parameters for temporary storage of files as they are transformed and moved through the pipeline
   EfsId:
     Type: String
@@ -214,30 +166,16 @@ Resources:
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           Essential: true
           Environment:
-            Variables:
-              ENV: !Ref ApplicationEnvironment
-              SNS_ROLE_ARN: !GetAtt TransformationSnsRole.Arn
-              SSM_ROLE_ARN: !GetAtt TransformationSsmRole.Arn
-              SNS_TOPIC: !Ref EventsTopicArn
-              PACKAGE_ID: !Ref PackageID
-              ARCHIVEMATICA_SS_API_KEY: !Ref ArchivematicaSSAPIKey
-              ARCHIVEMATICA_SS_USER_NAME: !Ref ArchivematicaSSUserName
-              ARCHIVEMATICA_SS_URL: !Ref ArchivematicaSSUrl
-              ZODIAC_BASEURL: !Ref ZodiacBaseurl
-              AS_BASEURL: !Ref ASBaseurl
-              AS_USERNAME: !Ref ASUsername
-              AS_PASSWORD: !Ref ASPassword
-              AS_REPO_ID: !Ref ASRepoID
-              AURORA_BASEURL: !Ref AuroraBaseurl
-              AURORA_OAUTH_CLIENT_BASEURL: !Ref AuroraOauthClientBaseurl
-              AURORA_OAUTH_CLIENT_ID: !Ref AuroraOauthClientID
-              AURORA_OAUTH_CLIENT_SECRET: !Ref AuroraOauthClientSecret
-              AURORA_ACCESSION_STARTED_STATUS: !Ref AuroraAccessionStartedStatus
-              AURORA_PACKAGE_COMPLETE_STATUS: !Ref AuroraPackageCompleteStatus
-              IIIF_MANIFEST_BASEURL: !Ref IIIFManifestBaseurl
-              DOWNLOAD_BASEURL: !Ref DownloadBaseurl
-              APP_CONFIG_PATH: !Ref ApplicationName
-              AWS_REGION: !Ref AWS::Region
+            - Name: ENV
+              Value: !Ref ApplicationEnvironment
+            - Name: AWS_SNS_ROLE_ARN
+              Value: !GetAtt TransformationSnsRole.Arn
+            - Name: AWS_SSM_ROLE_ARN
+              Value: !GetAtt TransformationSsmRole.Arn
+            - Name: AWS_SNS_TOPIC
+              Value: !Ref EventsTopicArn
+            - Name: PACKAGE_ID
+              Value: !Ref PackageID
           Tags:
             - Key: Environment
               Value: !Ref ApplicationEnvironment
