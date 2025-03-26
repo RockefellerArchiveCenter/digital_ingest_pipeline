@@ -5,6 +5,7 @@ Description: >
 
   Assemble Submission Information Packages.
 #Everything below this comment was copied from 'digital_ingest_discovery_template.yaml' with a change in service name
+#Fornax service name changed to Assembly
 Parameters: 
   ContainerAccountId:
     Type: String
@@ -81,7 +82,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                 Resource: 
-                  - !GetAtt FornaxLogGroup.Arn
+                  - !GetAtt AssemblyLogGroup.Arn
         - PolicyName: EcrPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -98,15 +99,15 @@ Resources:
                   - 'ecr:GetAuthorizationToken'
                 Resource: '*'
 
-  FornaxUser:
+  AssemblyUser:
     Type: AWS::IAM::User
 
-  FornaxUserAccessKey:
+  AssemblyUserAccessKey:
     Type: AWS::IAM::AccessKey
     Properties: 
-      UserName: !Ref FornaxUser
+      UserName: !Ref AssemblyUser
 
-  FornaxRole:
+  AssemblyRole:
     Type: AWS::IAM::Role
     Properties: 
       AssumeRolePolicyDocument:
@@ -115,12 +116,12 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !GetAtt FornaxUser.Arn
+                - !GetAtt AssemblyUser.Arn
             Action:
               - 'sts:AssumeRole'
       Description: 'Allows access to SSM parameters.'
       Policies:
-        - PolicyName: FornaxSSMPolicy
+        - PolicyName: AssemblySSMPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -130,13 +131,13 @@ Resources:
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
 
-  FornaxLogGroup:
+  AssemblyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
   
-  FornaxEcsTask:
+  AssemblyEcsTask:
     Type: AWS::ECS::TaskDefinition
     Properties: 
       Cpu: "1024"
@@ -175,7 +176,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              "awslogs-group": !Ref FornaxLogGroup
+              "awslogs-group": !Ref AssemblyLogGroup
               "awslogs-region": !Ref AWS::Region
               "awslogs-stream-prefix": "ecs"
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
@@ -205,6 +206,6 @@ Resources:
               IAM: DISABLED
 
 Outputs:
-  FornaxArn:
-    Description: Fornax ECS Task Definition ARN
-    Value: !Ref FornaxEcsTask
+  AssemblyArn:
+    Description: Assembly ECS Task Definition ARN
+    Value: !Ref AssemblyEcsTask
