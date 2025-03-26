@@ -1,11 +1,10 @@
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: '2010-09-09'
 
 Description: >
-  Fornax
+  digital-ingest-assembly
 
   Assemble Submission Information Packages.
-#Everything below this comment was copied from 'digital_ingest_discovery_template.yaml' with a change in service name
-#Fornax service name changed to Assembly
+
 Parameters: 
   ContainerAccountId:
     Type: String
@@ -17,6 +16,7 @@ Parameters:
     AllowedValues:
       - dev
       - prod
+    Default: dev
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
