@@ -173,7 +173,7 @@ Resources:
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
-        # What else?
+        # TODO: Add additional parameters: clarify which parameters are necessary from digital-ingest-transformation_template.yml
 
   # SNS topic
   DigitalIngestTopic:
