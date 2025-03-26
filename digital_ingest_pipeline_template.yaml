@@ -152,7 +152,10 @@ Resources:
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
-        # What else?
+        SourcePath: discovery
+        TemporaryPath: assembly_tmp
+        DestinationPath: assembly
+        EventsTopicArn: !Ref DigitalIngestTopic
 
   # Transformation ECS Task
   TransformationTask:
@@ -205,7 +208,7 @@ Resources:
   DigitalIngestNotificationsQueueSubscription:
     Type: AWS::SNS::Subscription
     Properties:
-      TopicArn: !GetAtt DigitalIngestTopic.Arn
+      TopicArn: !Ref DigitalIngestTopic
       Protocol: sqs
       Endpoint: !GetAtt DigitalIngestNotificationsQueue.Arn
       FilterPolicy: '"requested_status": [{"exists": false}]'
@@ -215,7 +218,7 @@ Resources:
   DigitalIngestTriggerQueueSubscription:
     Type: AWS::SNS::Subscription
     Properties:
-      TopicArn: !GetAtt DigitalIngestTopic.Arn
+      TopicArn: !Ref DigitalIngestTopic
       Protocol: sqs
       Endpoint: !GetAtt DigitalIngestTriggerQueue.Arn
       FilterPolicy: '"requested_status": [{"exists": true}]'
