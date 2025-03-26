@@ -104,8 +104,7 @@ Resources:
     Properties: 
       UserName: !Ref DiscoveryUser
 
-  # TODO should this be multiple roles?
-  DiscoveryRole:
+  DiscoveryS3Role:
     Type: AWS::IAM::Role
     Properties: 
       AssumeRolePolicyDocument:
@@ -117,17 +116,33 @@ Resources:
                 - !GetAtt DiscoveryUser.Arn
             Action:
               - 'sts:AssumeRole'
-      Description: 'Allows access to SSM parameters.'
+      Description: 'Allows access to S3 Buckets.'
       Policies:
-        - PolicyName: DiscoverySSMPolicy
+        - PolicyName: DiscoveryS3Policy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
-                  - 'ssm:GetParametersByPath'
-                Resource:
-                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+            Action:
+              - 's3:GetObject'
+              - 's3:'
+            Resource:
+              - !Ref SourceBucketName
+
+  DiscoverySnsRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt DiscoveryUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows publication of SNS messages.'
+      Policies:
         - PolicyName: DiscoverySNSPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -158,8 +173,10 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
-            - Name: AWS_ROLE_ARN
-              Value: !GetAtt DiscoveryRole.Arn
+            - Name: AWS_S3_ROLE_ARN
+              Value: !GetAtt DiscoveryS3Role.Arn
+            - Name: AWS_SNS_ROLE_ARN
+              Value: !GetAtt DiscoverySnsRole.Arn
             - Name: STORAGE_DIR
               Value: !Sub '${EfsRootPath}/${StoragePath}'
             - Name: TMP_DIR
