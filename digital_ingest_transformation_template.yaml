@@ -17,56 +17,56 @@ Parameters:
     AllowedValues:
       - dev
       - prod
-    # Do we need a default defined like in digital_ingest_pipeline_template.yml?
+    default: dev
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  ARCHIVEMATICA_SS_API_KEY:
+  ArchivematicaSSAPIKey:
     Type: String
     Description: API Key for Archivematica Storage Service
-  ARCHIVEMATICA_SS_USER_NAME:
+  ArchivematicaSSUserName:
     Type: String
     Description: Archivematica Storage Service Username
-  ARCHIVEMATICA_SS_URL: 
+  ArchivematicaSSUrl: 
     Type: String
     Description: URL for the Archivematica Storage Service
-  ZODIAC_BASEURL:
+  ZodiacBaseurl:
     Type: String
     Description: BaseURL for the Zodiac Backend
-  AS_BASEURL:
+  ASBaseurl:
     Type: String
     Description: BaseURL for the ArchivesSpace Backend
-  AS_USERNAME:
+  ASUsername:
     Type: String
     Description: ArchivesSpace Username
-  AS_PASSWORD:
+  ASPassword:
     Type: String
     Description: ArchivesSpace Password
-  AS_REPO_ID:
+  ASRepoID:
     Type: Number
     Description: ArchivesSpace Repository ID
-  AURORA_BASEURL:
+  AuroraBaseurl:
     Type: String
     Description: Aurora BaseURL
-  AURORA_OAUTH_CLIENT_BASEURL:
+  AuroraOauthClientBaseurl:
     Type: String
     Description: Aurora OAuth Client BaseURL
-  AURORA_OAUTH_CLIENT_ID:
+  AuroraOauthClientID:
     Type: String
     Description: Aurora OAuth Client ID
-  AURORA_OAUTH_CLIENT_SECRET:
+  AuroraOauthClientSecret:
     Type: String
     Description: Aurora OAuth Client Secret
-  AURORA_ACCESSION_STARTED_STATUS:
+  AuroraAccessionStartedStatus:
     Type: String
     Description: Status of Aurora Accession at start
-  AURORA_PACKAGE_COMPLETE_STATUS:
+  AuroraPackageCompleteStatus:
     Type: String
     Description: Status of Aurora Accession at completion
-  IIIF_MANIFEST_BASEURL:
+  IIIFManifestBaseurl:
     Type: String
     Description: BaseURL for the IIIF manifest
-  DOWNLOAD_BASEURL:
+  DownloadBaseurl:
     Type: String
     Description: BaseURL to download the object
   # Elastic File System (EFS) parameters for temporary storage of files as they are transformed and moved through the pipeline
@@ -93,6 +93,7 @@ Parameters:
     Description: Name of S3 bucket to which packaged files should be delivered.
 
   # Elastic File System (EFS) parameters for digitization delivery for packages that are not from Aurora
+  # These are being called by the EFS resources, but not sure if that resource is necessary for this application
   DigitizationEfsId:
     Type: String
     Description: Identifier for digitization delivery EFS.
@@ -108,7 +109,9 @@ Parameters:
   DigitizationUrl:
     Type: String
     Description: URL to post to to trigger further processing for packages of digitized content.
-
+  PackageID:
+    Type: String
+    Description: String representation of the package identifier
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
@@ -231,24 +234,23 @@ Resources:
               SNS_ROLE_ARN: !GetAtt TransformationRole.Arn
               SSM_ROLE_ARN: !GetAtt TransformationRole.Arn
               SNS_TOPIC: !Ref EventsTopicArn
-              # Currently don't know where this comes from/what it is
               PACKAGE_ID: !Ref PackageID
-              ARCHIVEMATICA_SS_API_KEY: !Ref ARCHIVEMATICA_SS_API_KEY
-              ARCHIVEMATICA_SS_USER_NAME: !Ref ARCHIVEMATICA_SS_USER_NAME
-              ARCHIVEMATICA_SS_URL: !Ref ARCHIVEMATICA_SS_URL
-              ZODIAC_BASEURL: !Ref ZODIAC_BASEURL
-              AS_BASEURL: !Ref AS_BASEURL
-              AS_USERNAME: !Ref AS_USERNAME
-              AS_PASSWORD: !Ref AS_PASSWORD
-              AS_REPO_ID: !Ref AS_REPO_ID
-              AURORA_BASEURL: !Ref AURORA_BASEURL
-              AURORA_OAUTH_CLIENT_BASEURL: !Ref AURORA_OAUTH_CLIENT_BASEURL
-              AURORA_OAUTH_CLIENT_ID: !Ref AURORA_OAUTH_CLIENT_ID
-              AURORA_OAUTH_CLIENT_SECRET: !Ref AURORA_OAUTH_CLIENT_SECRET
-              AURORA_ACCESSION_STARTED_STATUS: !Ref AURORA_ACCESSION_STARTED_STATUS
-              AURORA_PACKAGE_COMPLETE_STATUS: !Ref AURORA_PACKAGE_COMPLETE_STATUS
-              IIIF_MANIFEST_BASEURL: !Ref IIIF_MANIFEST_BASEURL
-              DOWNLOAD_BASEURL: !Ref DOWNLOAD_BASEURL
+              ARCHIVEMATICA_SS_API_KEY: !Ref ArchivematicaSSAPIKey
+              ARCHIVEMATICA_SS_USER_NAME: !Ref ArchivematicaSSUserName
+              ARCHIVEMATICA_SS_URL: !Ref ArchivematicaSSUrl
+              ZODIAC_BASEURL: !Ref ZodiacBaseurl
+              AS_BASEURL: !Ref ASBaseurl
+              AS_USERNAME: !Ref ASUsername
+              AS_PASSWORD: !Ref ASPassword
+              AS_REPO_ID: !Ref ASRepoID
+              AURORA_BASEURL: !Ref AuroraBaseurl
+              AURORA_OAUTH_CLIENT_BASEURL: !Ref AuroraOauthClientBaseurl
+              AURORA_OAUTH_CLIENT_ID: !Ref AuroraOauthClientID
+              AURORA_OAUTH_CLIENT_SECRET: !Ref AuroraOauthClientSecret
+              AURORA_ACCESSION_STARTED_STATUS: !Ref AuroraAccessionStartedStatus
+              AURORA_PACKAGE_COMPLETE_STATUS: !Ref AuroraPackageCompleteStatus
+              IIIF_MANIFEST_BASEURL: !Ref IIIFManifestBaseurl
+              DOWNLOAD_BASEURL: !Ref DownloadBaseurl
               APP_CONFIG_PATH: !Ref ApplicationName
               AWS_REGION: !Ref AWS::Region
           Tags:
