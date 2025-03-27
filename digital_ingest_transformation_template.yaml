@@ -39,19 +39,6 @@ Parameters:
     Description: ARN for events SNS Topic
 
 Resources:
-  # I think we need this, but could be wrong.
-  SnsTopicParam:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
-      Description: ARN for SNS topic to send messages to.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/SNS_TOPIC
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-      Type: String
-      Value: !Ref EventsTopicArn
-
   # An ECS task definition that defines the container
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
@@ -116,7 +103,7 @@ Resources:
               - 'sts:AssumeRole'
       Description: 'Allows user to send SNS messages.'
       Policies:
-        - PolicyName: TransformationSNSPolicy
+        - PolicyName: TransformationSnsPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -140,7 +127,7 @@ Resources:
               - 'sts:AssumeRole'
       Description: 'Allows access to SSM parameters.'
       Policies:
-        - PolicyName: TransformationSSMPolicy
+        - PolicyName: TransformationSsmPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
