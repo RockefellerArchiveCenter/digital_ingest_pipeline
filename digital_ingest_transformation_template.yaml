@@ -29,7 +29,8 @@ Parameters:
   EfsRootPath:
     Type: String
     Description: Root path at which EFS is mounted.
-  PackageID: #Is this needed?
+  #Is this needed?
+  PackageID: 
     Type: String
     Description: String representation of the package identifier
   EventsTopicArn:
@@ -151,7 +152,7 @@ Resources:
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           Essential: true
           Environment:
-            - Name: ENVIRONMENT
+            - Name: ENV
               Value: !Ref ApplicationEnvironment
             - Name: AWS_SNS_ROLE_ARN
               Value: !GetAtt TransformationSnsRole.Arn
@@ -159,7 +160,8 @@ Resources:
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-            - Name: PACKAGE_ID  #Is this needed?
+            #Is this needed?
+            - Name: PACKAGE_ID
               Value: !Ref PackageID
           Tags:
             - Key: Environment
