@@ -29,10 +29,6 @@ Parameters:
   EfsRootPath:
     Type: String
     Description: Root path at which EFS is mounted.
-  #Is this needed?
-  PackageID: 
-    Type: String
-    Description: String representation of the package identifier
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
@@ -81,7 +77,6 @@ Resources:
 
   TransformationUser:
     Type: AWS::IAM::User
-    UserName: TransformationUser
 
   TransformationUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -160,9 +155,6 @@ Resources:
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-            #Is this needed?
-            - Name: PACKAGE_ID
-              Value: !Ref PackageID
           Tags:
             - Key: Environment
               Value: !Ref ApplicationEnvironment
