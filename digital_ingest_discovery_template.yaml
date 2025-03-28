@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Ursa Major
+  digital-ingest-discovery
 
   Discovers new packages.
 
@@ -79,7 +79,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                 Resource: 
-                  - !GetAtt UrsaMajorLogGroup.Arn
+                  - !GetAtt DiscoveryLogGroup.Arn
         - PolicyName: EcrPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -96,15 +96,15 @@ Resources:
                   - 'ecr:GetAuthorizationToken'
                 Resource: '*'
 
-  UrsaMajorUser:
+  DiscoveryUser:
     Type: AWS::IAM::User
 
-  UrsaMajorUserAccessKey:
+  DiscoveryUserAccessKey:
     Type: AWS::IAM::AccessKey
     Properties: 
-      UserName: !Ref UrsaMajorUser
+      UserName: !Ref DiscoveryUser
 
-  UrsaMajorRole:
+  DiscoveryS3Role:
     Type: AWS::IAM::Role
     Properties: 
       AssumeRolePolicyDocument:
@@ -113,28 +113,53 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !GetAtt UrsaMajorUser.Arn
+                - !GetAtt DiscoveryUser.Arn
             Action:
               - 'sts:AssumeRole'
-      Description: 'Allows access to SSM parameters.'
+      Description: 'Allows access to S3 Buckets.'
       Policies:
-        - PolicyName: UrsaMajorSSMPolicy
+        - PolicyName: DiscoveryS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:'
+            Resource:
+              - !Ref SourceBucketName
+
+  DiscoverySnsRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt DiscoveryUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows publication of SNS messages.'
+      Policies:
+        - PolicyName: DiscoverySNSPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action: 
-                  - 'ssm:GetParametersByPath'
+                  - 'sns:Publish'
                 Resource:
-                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+                  - !Ref EventsTopicArn
 
-  UrsaMajorLogGroup:
+  DiscoveryLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
   
-  UrsaMajorEcsTask:
+  DiscoveryEcsTask:
     Type: AWS::ECS::TaskDefinition
     Properties: 
       Cpu: "1024"
@@ -148,8 +173,10 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
-            - Name: AWS_ROLE_ARN
-              Value: !GetAtt DigitizedAvPackagingRole.Arn
+            - Name: AWS_S3_ROLE_ARN
+              Value: !GetAtt DiscoveryS3Role.Arn
+            - Name: AWS_SNS_ROLE_ARN
+              Value: !GetAtt DiscoverySnsRole.Arn
             - Name: STORAGE_DIR
               Value: !Sub '${EfsRootPath}/${StoragePath}'
             - Name: TMP_DIR
@@ -162,7 +189,6 @@ Resources:
               Value: !Ref SourceBucketName
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-
           MountPoints:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
@@ -173,7 +199,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              "awslogs-group": !Ref UrsaMajorLogGroup
+              "awslogs-group": !Ref DiscoveryLogGroup
               "awslogs-region": !Ref AWS::Region
               "awslogs-stream-prefix": "ecs"
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
@@ -203,6 +229,6 @@ Resources:
               IAM: DISABLED
 
 Outputs:
-  UrsaMajorArn:
-    Description: Ursa Major ECS Task Definition ARN
-    Value: !Ref UrsaMajorEcsTask
+  DiscoveryArn:
+    Description: Discovery ECS Task Definition ARN
+    Value: !Ref DiscoveryEcsTask
