@@ -14,7 +14,7 @@ Mappings:
       prod: digital_ingest_pipeline
     SecurityGroup:
       dev: "sg-0f98d77d7bb7b4ce6"
-      prod: "sg-0a568e8a6ff39b710" 
+      prod: "sg-0a568e8a6ff39b710"
     Subnet:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-02e68cd17b1abfc14"
@@ -33,7 +33,7 @@ Mappings:
     DigitizationEfsId:
       dev: "fs-4ecb5eae"
       prod: "fs-b9197b5a"
-    DigitizationEfsAccessPointId: 
+    DigitizationEfsAccessPointId:
       dev: "fsap-0d530b00165a90a27"
       prod: "" # TODO
     DigitizationRootPath:
@@ -44,7 +44,7 @@ Mappings:
       prod: "src"
     DigitizationUrl:
       dev: "https://zodiac.dev.rockarch.org:8012"
-      prod: "https://zodiac.rockarch.org:8012"  
+      prod: "https://zodiac.rockarch.org:8012"
 
 Parameters:
   Environment:
@@ -66,7 +66,7 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-temporary-storage
-      LifecyclePolicies: 
+      LifecyclePolicies:
         - TransitionToIA: AFTER_30_DAYS
       PerformanceMode: generalPurpose
       ThroughputMode: elastic
@@ -90,7 +90,7 @@ Resources:
           OwnerUid: "1000"
           Permissions: "755"
         Path: "/digital-ingest"
-  
+
   # ECS Cluster
   DigitalIngestECSCluster:
     Type: AWS::ECS::Cluster
@@ -109,7 +109,7 @@ Resources:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
-        !Join ["/", 
+        !Join ["/",
           [
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
@@ -162,7 +162,7 @@ Resources:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
-        !Join ["/", 
+        !Join ["/",
           [
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
@@ -176,14 +176,14 @@ Resources:
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
-        # What else?
+        EventsTopicArn: !Ref DigitalIngestTopic
 
   # SNS topic
   DigitalIngestTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: digital-ingest-notifications    
-  
+      TopicName: digital-ingest-notifications
+
   # SQS Notifications Queue
   DigitalIngestNotificationsQueue:
     Type: AWS::SQS::Queue
@@ -223,13 +223,13 @@ Resources:
       Endpoint: !GetAtt DigitalIngestTriggerQueue.Arn
       FilterPolicy: '"requested_status": [{"exists": true}]'
       FilterPolicyScope: MessageAttributes
-  
+
   # Notifications Lambda
   NotificationsLambda:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
-        !Join ["/", 
+        !Join ["/",
           [
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
@@ -249,7 +249,7 @@ Resources:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
-        !Join ["/", 
+        !Join ["/",
           [
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
@@ -271,7 +271,7 @@ Resources:
     Type: "AWS::CloudFormation::Stack"
     Properties:
       TemplateURL:
-        !Join ["/", 
+        !Join ["/",
           [
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
