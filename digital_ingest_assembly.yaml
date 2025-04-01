@@ -41,8 +41,299 @@ Parameters:
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
+  ZodiacApiKey: 
+    Type: String
+    Description: API Key for Zodiac.
+  ZodiacBaseurl:
+    Type: String
+    Description: Base URL for Zodiac.
+  AuroraArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for Aurora origin.
+  AuroraArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for Aurora origin.
+  AuroraArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for Aurora origin.
+  AuroraArchivematicaTransferSource:
+    Type: String
+    Description: Archivematica transfer source UUID for Aurora origin.
+  AuroraArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for Aurora origin.
+  DigitizationArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for digitization origin.
+  DigitizationArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for digitization origin.
+  DigitizationArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for digitization origin.
+  DigitizationArchivematicaTransferSource:
+    Type: String
+    Description: Archivematica transfer source UUID for digitization origin.
+  DigitizationArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for digitization origin.
+  AvDigitizationArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for AV digitization origin.
+  AvDigitizationArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for AV digitization origin.
+  AvDigitizationArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for AV digitization origin.
+  AvDigitizationArchivematicaTransferSource:
+    Type: String
+    Description: Archivematica transfer source UUID for AV digitization origin.
+  AvDigitizationArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for AV digitization origin.
+  LegacyDigitalArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for legacy digital origin.
+  LegacyDigitalArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for legacy digital origin.
+  LegacyDigitalArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for legacy digital origin.
+  LegacyDigitalArchivematicaTransferSource:
+    Type: String
+    Description: Archivematica transfer source UUID for legacy digital origin.
+  LegacyDigitalArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for legacy digital origin.
 
 Resources:
+  ZodiacBaseUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Zodiac base URL.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ZodiacBaseurl
+  ZodiacApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Zodiac API Key.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ZodiacApiKey
+
+  AuroraArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaApiKey
+  AuroraArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaUserName
+  AuroraArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaUrl
+  AuroraArchivematicaTransferSourceParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica transfer source UUID for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaTransferSource
+  AuroraArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaProcessingConfig
+
+  DigitizationArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaApiKey
+  DigitizationArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaUserName
+  DigitizationArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaUrl
+  DigitizationArchivematicaTransferSourceParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica transfer source UUID for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaTransferSource
+  DigitizationArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaProcessingConfig
+
+  AvDigitizationArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaApiKey
+  AvDigitizationArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaUserName
+  AvDigitizationArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaUrl
+  AvDigitizationArchivematicaTransferSourceParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica transfer source UUID for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaTransferSource
+  AvDigitizationArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaProcessingConfig
+
+  LegacyDigitalArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaApiKey
+  LegacyDigitalArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaUserName
+  LegacyDigitalArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaUrl
+  LegacyDigitalArchivematicaTransferSourceParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica transfer source UUID for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaTransferSource
+  LegacyDigitalArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaProcessingConfig
+
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:

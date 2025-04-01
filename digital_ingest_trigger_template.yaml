@@ -136,7 +136,6 @@ Resources:
         Variables:
           ENV: !Ref ApplicationEnvironment
           APP_CONFIG_PATH: !Ref ApplicationName
-          AWS_REGION: !Ref AWS::Region
       Architectures:
         - x86_64
       Tags: 
