@@ -31,7 +31,7 @@ jobs:
 
       - name: Sync to AWS
         run: |
-          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }}/ ${{ env.APP_NAME }}\
+          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.APP_NAME }} \
             --exclude '.git/*' \
             --exclude '.github/*' \
             --exclude 'README.md' \
