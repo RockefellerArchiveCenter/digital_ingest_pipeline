@@ -23,7 +23,7 @@ jobs:
           cache: 'pip'
 
       - name: Install cfn-lint
-        run: pip install cfn-lint
+        run: pip install -rrequirements.txt
       
       - name: Run cfn-lint tests
         run: cfn-lint *.yaml
