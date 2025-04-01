@@ -46,52 +46,28 @@ Mappings:
       dev: "https://zodiac.dev.rockarch.org/api"  # TODO
       prod: "https://zodiac.rockarch.org/api"  # TODO
   Archivematica:
-    AuroraUserName:
+    ZodiacPlUsername:
       dev: digital_ingest_assembly
       prod: digital_ingest_assembly
-    AuroraUrl:
+    ZodiacPlUrl:
       dev: http://archivematica-zodiac.dev.rockarch.org
       prod: http://archivematica-zodiac.rockarch.org
-    AuroraTransferSource:
+    ZodiacPlTransferSource:
       dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
       prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
-    AuroraProcessingConfig:
+    ZodiacPlProcessingConfig:
       dev: automated
       prod: automated
-    DigitizationUserName:
+    MainPlUsername:
       dev: digital_ingest_assembly
       prod: digital_ingest_assembly
-    DigitizationUrl:
+    MainPlUrl:
       dev: http://archivematica.dev.rockarch.org
       prod: http://archivematica.rockarch.org
-    DigitizationTransferSource:
+    MainPlTransferSource:
       dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
       prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
-    DigitizationProcessingConfig:
-      dev: automated
-      prod: automated
-    AvDigitizationUserName:
-      dev: digital_ingest_assembly
-      prod: digital_ingest_assembly
-    AvDigitizationUrl:
-      dev: http://archivematica.dev.rockarch.org
-      prod: http://archivematica.rockarch.org
-    AvDigitizationTransferSource:
-      dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
-      prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
-    AvDigitizationProcessingConfig:
-      dev: digitized_av
-      prod: digitized_av
-    LegacyDigitalUserName:
-      dev: digital_ingest_assembly
-      prod: digital_ingest_assembly
-    LegacyDigitalUrl:
-      dev: http://archivematica-zodiac.dev.rockarch.org
-      prod: http://archivematica-zodiac.rockarch.org
-    LegacyDigitalTransferSource:
-      dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
-      prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
-    LegacyDigitalProcessingConfig:
+    MainPlProcessingConfig:
       dev: automated
       prod: automated
   ArchivematicaStorageService:
@@ -140,19 +116,13 @@ Parameters:
       - dev
       - prod
     Default: dev
-  AuroraArchivematicaApiKey:
+  ArchivematicaZodiacPlApiKey:
     Type: String
     Description: Archivematica API Key for Aurora origin.
-  DigitizationArchivematicaApiKey:
+  ArchivematicaMainPlApiKey:
     Type: String
     Description: Archivematica API Key for digitization origin.
-  AvDigitizationArchivematicaApiKey:
-    Type: String
-    Description: Archivematica API Key for AV digitization origin.
-  LegacyDigitalArchivematicaApiKey:
-    Type: String
-    Description: Archivematica API Key for legacy digital origin.
-  WebhookArchivematicaApiKey:
+  ArchivematicaCallbackApiKey:
     Type: String
     Description: Archivematica API Key sent in post-store requests.
   ArchivematicaStorageServiceApiKey:
@@ -270,26 +240,26 @@ Resources:
         DestinationPath: assembly
         EventsTopicArn: !Ref DigitalIngestTopic
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
-        AuroraArchivematicaApiKey: !Ref AuroraArchivematicaApiKey
-        AuroraArchivematicaUserName: !FindInMap [Archivematica, AuroraUserName, !Ref Environment]
-        AuroraArchivematicaUrl: !FindInMap [Archivematica, AuroraUrl, !Ref Environment]
-        AuroraArchivematicaTransferSource: !FindInMap [Archivematica, AuroraTransferSource, !Ref Environment]
-        AuroraArchivematicaProcessingConfig: !FindInMap [Archivematica, AuroraProcessingConfig, !Ref Environment]
-        DigitizationArchivematicaApiKey: !Ref DigitizationArchivematicaApiKey
-        DigitizationArchivematicaUserName: !FindInMap [Archivematica, DigitizationUserName, !Ref Environment]
-        DigitizationArchivematicaUrl: !FindInMap [Archivematica, DigitizationUrl, !Ref Environment]
-        DigitizationArchivematicaTransferSource: !FindInMap [Archivematica, DigitizationTransferSource, !Ref Environment]
-        DigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, DigitizationProcessingConfig, !Ref Environment]
-        AvDigitizationArchivematicaApiKey: !Ref AvDigitizationArchivematicaApiKey
-        AvDigitizationArchivematicaUserName: !FindInMap [Archivematica, AvDigitizationUserName, !Ref Environment]
-        AvDigitizationArchivematicaUrl: !FindInMap [Archivematica, AvDigitizationUrl, !Ref Environment]
-        AvDigitizationArchivematicaTransferSource: !FindInMap [Archivematica, AvDigitizationTransferSource, !Ref Environment]
-        AvDigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, AvDigitizationProcessingConfig, !Ref Environment]
-        LegacyDigitalArchivematicaApiKey: !Ref LegacyDigitalArchivematicaApiKey
-        LegacyDigitalArchivematicaUserName: !FindInMap [Archivematica, LegacyDigitalUserName, !Ref Environment]
-        LegacyDigitalArchivematicaUrl: !FindInMap [Archivematica, LegacyDigitalUrl, !Ref Environment]
-        LegacyDigitalArchivematicaTransferSource: !FindInMap [Archivematica, LegacyDigitalTransferSource, !Ref Environment]
-        LegacyDigitalArchivematicaProcessingConfig: !FindInMap [Archivematica, LegacyDigitalProcessingConfig, !Ref Environment]
+        AuroraArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey
+        AuroraArchivematicaUserName: !FindInMap [Archivematica, ZodiacPlUsername, !Ref Environment]
+        AuroraArchivematicaUrl: !FindInMap [Archivematica, ZodiacPlUrl, !Ref Environment]
+        AuroraArchivematicaTransferSource: !FindInMap [Archivematica, ZodiacPlTransferSource, !Ref Environment]
+        AuroraArchivematicaProcessingConfig: !FindInMap [Archivematica, ZodiacPlProcessingConfig, !Ref Environment]
+        DigitizationArchivematicaApiKey: !Ref ArchivematicaMainPlApiKey
+        DigitizationArchivematicaUserName: !FindInMap [Archivematica,MainPlUsername, !Ref Environment]
+        DigitizationArchivematicaUrl: !FindInMap [Archivematica, MainPlUrl, !Ref Environment]
+        DigitizationArchivematicaTransferSource: !FindInMap [Archivematica, MainPlTransferSource, !Ref Environment]
+        DigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, MainPlProcessingConfig, !Ref Environment]
+        AvDigitizationArchivematicaApiKey: !Ref ArchivematicaMainPlApiKey
+        AvDigitizationArchivematicaUserName: !FindInMap [Archivematica, MainPlUsername, !Ref Environment]
+        AvDigitizationArchivematicaUrl: !FindInMap [Archivematica, MainPlUrl, !Ref Environment]
+        AvDigitizationArchivematicaTransferSource: !FindInMap [Archivematica, MainPlTransferSource, !Ref Environment]
+        AvDigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, MainPlProcessingConfig, !Ref Environment]
+        LegacyDigitalArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey
+        LegacyDigitalArchivematicaUserName: !FindInMap [Archivematica, ZodiacPlUsername, !Ref Environment]
+        LegacyDigitalArchivematicaUrl: !FindInMap [Archivematica, ZodiacPlUrl, !Ref Environment]
+        LegacyDigitalArchivematicaTransferSource: !FindInMap [Archivematica, ZodiacPlTransferSource, !Ref Environment]
+        LegacyDigitalArchivematicaProcessingConfig: !FindInMap [Archivematica, ZodiacPlProcessingConfig, !Ref Environment]
 
   # Transformation ECS Task
   TransformationTask:
@@ -432,5 +402,5 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_webhook
-        ArchivematicaApiKey: !Ref WebhookArchivematicaApiKey
+        ArchivematicaApiKey: !Ref ArchivematicaCallbackApiKey
         NotificationsTopicArn: !Ref DigitalIngestTopic
