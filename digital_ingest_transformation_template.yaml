@@ -31,10 +31,219 @@ Parameters:
     Description: Root path at which EFS is mounted.
   EventsTopicArn:
     Type: String
-    Description: ARN for events SNS Topic
+    Description: ARN for events SNS Topic.
+  ArchivematicaSsApiKey:
+    Type: String
+    Description: API Key for Archivematica Storage Service.
+  ArchivematicaSsUserName:
+    Type: String
+    Description: User for Archivematica Storage Service.
+  ArchivematicaSsUrl:
+    Type: String
+    Description: Base URL for Archivematica Storage Service.
+  ZodiacBaseurl:
+    Type: String
+    Description: Base URL for Zodiac.
+  ArchivesSpaceBaseurl:
+    Type: String
+    Description: Base URL for ArchivesSpace.
+  ArchivesSpaceUsername:
+    Type: String
+    Description: Username for ArchivesSpace.
+  ArchivesSpacePassword:
+    Type: String
+    Description: Password for ArchivesSpace.
+  ArchivesSpaceRepoId:
+    Type: String
+    Description: Repo ID for ArchivesSpace.
+  AuroraBaseurl:
+    Type: String
+    Description: Base URL for Aurora.
+  AuroraOauthClientBaseurl:
+    Type: String
+    Description: OAuth client base URL for Aurora.
+  AuroraOauthClientId:
+    Type: String
+    Description: OAuth Client ID for Aurora
+  AuroraOauthClientSecret:
+    Type: String
+    Description: OAuth Client Secret for Aurora.
+  AuroraAccessionStartedStatus:
+    Type: String
+    Description: Process status for accession started in Aurora.
+  AuroraPackageCompleteStatus:
+    Type: String
+    Description: Process status for package complete in Aurora.
+  IiifManifestBaseurl:
+    Type: String
+    Description: Base URL for IIIF Manifests.
+  DownloadBaseurl:
+    Type: String
+    Description: Base URL for downloadable assets.
 
 Resources:
-  # An ECS task definition that defines the container
+  ArchivematicaSsApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: API Key for Archivematica Storage Service.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_SS_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaSsApiKey
+  ArchivematicaSsUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: User for Archivematica Storage Service.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_SS_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaSsUserName
+  ArchivematicaSsUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Archivematica Storage Service.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_SS_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaSsUrl
+  ZodiacBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ARN for role with permissions for lambda.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ZodiacBaseurl
+  ArchivesSpaceBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpaceBaseurl
+  ArchivesSpaceUsernameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Username for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_USERNAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpaceUsername
+  ArchivesSpacePasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Password for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_PASSWORD
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpacePassword
+  ArchivesSpaceRepoIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Repository ID for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_REPO_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpaceRepoId
+  AuroraBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Aurora.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraBaseurl
+  AuroraOauthClientBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Aurora OAuth client.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_OAUTH_CLIENT_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraOauthClientBaseurl
+  AuroraOauthClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Client ID for Aurora OAuth client.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_OAUTH_CLIENT_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraOauthClientId
+  AuroraOauthClientSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Client Secret for Aurora OAuth client.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_OAUTH_CLIENT_SECRET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraOauthClientSecret
+  AuroraAccessionStartedStatusParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Process status for accessioning started in Aurora.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_ACCESSION_STARTED_STATUS
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraAccessionStartedStatus
+  AuroraPackageCompleteStatusParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Process status for package complete in Aurora.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_PACKAGE_COMPLETE_STATUS
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraPackageCompleteStatus
+  IiifManifestBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for IIIF manifests.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/IIIF_MANIFEST_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref IiifManifestBaseurl
+  DownloadBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for downloadable assets.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DOWNLOAD_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DownloadBaseurl
+  
+
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -155,12 +364,6 @@ Resources:
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-          Tags:
-            - Key: Environment
-              Value: !Ref ApplicationEnvironment
-            - Key: Application
-              Value: !Ref ApplicationName
-
           MountPoints:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath

@@ -123,11 +123,10 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-            Action:
-              - 's3:GetObject'
-              - 's3:'
-            Resource:
-              - !Ref SourceBucketName
+                Action:
+                  - 's3:GetObject'
+                Resource:
+                  - !Ref SourceBucketName
 
   DiscoverySnsRole:
     Type: AWS::IAM::Role
@@ -221,7 +220,7 @@ Resources:
               IAM: DISABLED
         - Name: digitization
           EFSVolumeConfiguration:
-            FilesystemID: !Ref DigitizationEfsId
+            FilesystemId: !Ref DigitizationEfsId
             RootDirectory: /
             TransitEncryption: ENABLED
             AuthorizationConfig:

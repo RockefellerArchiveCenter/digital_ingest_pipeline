@@ -119,7 +119,6 @@ Resources:
           ENV: !Ref ApplicationEnvironment
           APP_CONFIG_PATH: !Ref ApplicationName
           AWS_ROLE_ARN: !GetAtt DigitalIngestNotificationsRole.Arn
-          AWS_REGION: !Ref AWS::Region
       Tags:
         - Key: Environment
           Value: !Ref ApplicationEnvironment

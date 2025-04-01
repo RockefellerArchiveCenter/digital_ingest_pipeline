@@ -18,10 +18,6 @@ Mappings:
     Subnet:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-02e68cd17b1abfc14"
-  NotificationsLambda:
-    ZodiacBaseurl:
-      dev: "https://zodiac.dev.rockarch.org/api"
-      prod: "https://zodiac.rockarch.org/api"
   TriggerLambda:
     ECSSubnetName:
       dev: "subnet-098df07b0ab91cb1d"
@@ -43,8 +39,98 @@ Mappings:
       dev: "src"
       prod: "src"
     DigitizationUrl:
-      dev: "https://zodiac.dev.rockarch.org:8012"
-      prod: "https://zodiac.rockarch.org:8012"
+      dev: "http://10.0.1.90:8012"
+      prod: "https://10.0.1.144:8012"
+  Zodiac:
+    Baseurl:
+      dev: "https://zodiac.dev.rockarch.org/api"  # TODO
+      prod: "https://zodiac.rockarch.org/api"  # TODO
+  Archivematica:
+    AuroraUserName:
+      dev: digital_ingest_assembly
+      prod: digital_ingest_assembly
+    AuroraUrl:
+      dev: http://archivematica-zodiac.dev.rockarch.org
+      prod: http://archivematica-zodiac.rockarch.org
+    AuroraTransferSource:
+      dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
+      prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
+    AuroraProcessingConfig:
+      dev: automated
+      prod: automated
+    DigitizationUserName:
+      dev: digital_ingest_assembly
+      prod: digital_ingest_assembly
+    DigitizationUrl:
+      dev: http://archivematica.dev.rockarch.org
+      prod: http://archivematica.rockarch.org
+    DigitizationTransferSource:
+      dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
+      prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
+    DigitizationProcessingConfig:
+      dev: automated
+      prod: automated
+    AvDigitizationUserName:
+      dev: digital_ingest_assembly
+      prod: digital_ingest_assembly
+    AvDigitizationUrl:
+      dev: http://archivematica.dev.rockarch.org
+      prod: http://archivematica.rockarch.org
+    AvDigitizationTransferSource:
+      dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
+      prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
+    AvDigitizationProcessingConfig:
+      dev: digitized_av
+      prod: digitized_av
+    LegacyDigitalUserName:
+      dev: digital_ingest_assembly
+      prod: digital_ingest_assembly
+    LegacyDigitalUrl:
+      dev: http://archivematica-zodiac.dev.rockarch.org
+      prod: http://archivematica-zodiac.rockarch.org
+    LegacyDigitalTransferSource:
+      dev: 5b6e5370-fd6a-4fb3-96db-adc17315922a
+      prod: 947060a0-8d13-4f32-8c0e-0fabbf2d63e7
+    LegacyDigitalProcessingConfig:
+      dev: automated
+      prod: automated
+  ArchivematicaStorageService:
+    Baseurl:
+      dev: http://archivematica-storage-service.dev.rockarch.org:8000
+      prod: http://archivematica-storage-service.rockarch.org:8000
+    Username: 
+      dev: digital_ingest_transformation
+      prod: digital_ingest_transformation
+  ArchivesSpace:
+    Baseurl:
+      dev: https://as.dev.rockarch.org/api
+      prod: https://as.rockarch.org/api
+    Username:
+      dev: digital_ingest_transformation
+      prod: digital_ingest_transformation
+    RepoId:
+      dev: 2
+      prod: 2
+  Aurora:
+    Baseurl:
+      dev: https://aurora.dev.rockarch.org/api
+      prod: https://aurora.rockarch.org/api
+    OauthClientBaseurl:
+      dev: https://rac-aurora-dev.auth.us-east-1.amazoncognito.com
+      prod: https://rac-aurora-prod.auth.us-east-1.amazoncognito.com
+    AccessionStartedStatus:
+      dev: 30
+      prod: 30
+    PackageCompleteStatus:
+      dev: 90
+      prod: 90
+  Dimes:
+    IiifManifestBaseurl:
+      dev: https://iiif.dev.rockarch.org/manifests
+      prod: https://iiif.rockarch.org/manifests
+    DownloadBaseurl:
+      dev: https://iiif.dev.rockarch.org/pdf
+      prod: https://iiif.rockarch.org/pdf
 
 Parameters:
   Environment:
@@ -54,6 +140,36 @@ Parameters:
       - dev
       - prod
     Default: dev
+  ZodiacApiKey:
+    Type: String
+    Description: API Key for Zodiac instance.
+  AuroraArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for Aurora origin.
+  DigitizationArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for digitization origin.
+  AvDigitizationArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for AV digitization origin.
+  LegacyDigitalArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for legacy digital origin.
+  WebhookArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key sent in post-store requests.
+  ArchivematicaStorageServiceApiKey:
+    Type: String
+    Description: Archivematica Storage Service API Key.
+  ArchivesSpaceTransformationPassword:
+    Type: String
+    Description: ArchivesSpace password for user associated with transformation service.
+  AuroraOauthClientId:
+    Type: String
+    Description: Aurora OAuth Client ID.
+  AuroraOauthClientSecret:
+    Type: String
+    Description: Aurora OAuth Client Sectret.
 
 Resources:
   # Temporary Storage
@@ -156,6 +272,28 @@ Resources:
         TemporaryPath: assembly_tmp
         DestinationPath: assembly
         EventsTopicArn: !Ref DigitalIngestTopic
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
+        ZodiacApiKey: !Ref ZodiacApiKey
+        AuroraArchivematicaApiKey: !Ref AuroraArchivematicaApiKey
+        AuroraArchivematicaUserName: !FindInMap [Archivematica, AuroraUserName, !Ref Environment]
+        AuroraArchivematicaUrl: !FindInMap [Archivematica, AuroraUrl, !Ref Environment]
+        AuroraArchivematicaTransferSource: !FindInMap [Archivematica, AuroraTransferSource, !Ref Environment]
+        AuroraArchivematicaProcessingConfig: !FindInMap [Archivematica, AuroraProcessingConfig, !Ref Environment]
+        DigitizationArchivematicaApiKey: !Ref DigitizationArchivematicaApiKey
+        DigitizationArchivematicaUserName: !FindInMap [Archivematica, DigitizationUserName, !Ref Environment]
+        DigitizationArchivematicaUrl: !FindInMap [Archivematica, DigitizationUrl, !Ref Environment]
+        DigitizationArchivematicaTransferSource: !FindInMap [Archivematica, DigitizationTransferSource, !Ref Environment]
+        DigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, DigitizationProcessingConfig, !Ref Environment]
+        AvDigitizationArchivematicaApiKey: !Ref AvDigitizationArchivematicaApiKey
+        AvDigitizationArchivematicaUserName: !FindInMap [Archivematica, AvDigitizationUserName, !Ref Environment]
+        AvDigitizationArchivematicaUrl: !FindInMap [Archivematica, AvDigitizationUrl, !Ref Environment]
+        AvDigitizationArchivematicaTransferSource: !FindInMap [Archivematica, AvDigitizationTransferSource, !Ref Environment]
+        AvDigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, AvDigitizationProcessingConfig, !Ref Environment]
+        LegacyDigitalArchivematicaApiKey: !Ref LegacyDigitalArchivematicaApiKey
+        LegacyDigitalArchivematicaUserName: !FindInMap [Archivematica, LegacyDigitalUserName, !Ref Environment]
+        LegacyDigitalArchivematicaUrl: !FindInMap [Archivematica, LegacyDigitalUrl, !Ref Environment]
+        LegacyDigitalArchivematicaTransferSource: !FindInMap [Archivematica, LegacyDigitalTransferSource, !Ref Environment]
+        LegacyDigitalArchivematicaProcessingConfig: !FindInMap [Archivematica, LegacyDigitalProcessingConfig, !Ref Environment]
 
   # Transformation ECS Task
   TransformationTask:
@@ -177,6 +315,22 @@ Resources:
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
         EventsTopicArn: !Ref DigitalIngestTopic
+        ArchivematicaSsApiKey: !Ref ArchivematicaStorageServiceApiKey
+        ArchivematicaSsUserName: !FindInMap [ArchivematicaStorageService, Username, !Ref Environment]
+        ArchivematicaSsUrl: !FindInMap [ArchivematicaStorageService, Baseurl, !Ref Environment]
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
+        ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
+        ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
+        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
+        ArchivesSpaceRepoId: !FindInMap [ArchivesSpace, RepoId, !Ref Environment]
+        AuroraBaseurl: !FindInMap [Aurora, Baseurl, !Ref Environment]
+        AuroraOauthClientBaseurl: !FindInMap [Aurora, OauthClientBaseurl, !Ref Environment]
+        AuroraOauthClientId: !Ref AuroraOauthClientId
+        AuroraOauthClientSecret: !Ref AuroraOauthClientSecret
+        AuroraAccessionStartedStatus: !FindInMap [Aurora, AccessionStartedStatus, !Ref Environment]
+        AuroraPackageCompleteStatus: !FindInMap [Aurora, PackageCompleteStatus, !Ref Environment]
+        IiifManifestBaseurl: !FindInMap [Dimes, IiifManifestBaseurl, !Ref Environment]
+        DownloadBaseurl: !FindInMap [Dimes, DownloadBaseurl, !Ref Environment]
 
   # SNS topic
   DigitalIngestTopic:
@@ -242,7 +396,7 @@ Resources:
         ApplicationName: digital_ingest_notifications
         EventsTopicArn: !Ref DigitalIngestTopic
         NotificationsQueueArn: !Ref DigitalIngestNotificationsQueue
-        ZodiacBaseurl: !FindInMap [NotificationsLambda, ZodiacBaseurl, !Ref Environment]
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
 
   # Trigger Lambda
   TriggerLambda:
@@ -282,5 +436,5 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_webhook
-        ParentStackName: !Ref AWS::StackName
+        ArchivematicaApiKey: !Ref WebhookArchivematicaApiKey
         NotificationsTopicArn: !Ref DigitalIngestTopic
