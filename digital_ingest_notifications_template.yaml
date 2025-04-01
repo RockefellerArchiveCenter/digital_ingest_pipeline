@@ -28,7 +28,6 @@ Resources:
   ZodiacBaseurlParam:
     Type: AWS::SSM::Parameter
     Properties: 
-      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
       Description: Base URL for Zodiac API.
       Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
       Tags: 
@@ -39,7 +38,6 @@ Resources:
   SnsTopicParam:
     Type: AWS::SSM::Parameter
     Properties: 
-      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
       Description: ARN for SNS topic to send messages to.
       Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/SNS_TOPIC
       Tags: 
@@ -134,7 +132,7 @@ Resources:
       RetentionInDays: 90
 
   DigitalIngestNotificationsEventSourceMapping:
-    Type: AWS::Lambda:EventSourceMapping
+    Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn: !Ref NotificationsQueueArn
       FunctionName: !GetAtt DigitalIngestNotificationsFunction.Arn

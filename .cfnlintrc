@@ -1,2 +1,0 @@
-ignore_checks:
-    - E3006 # ignore errors about infrastructure not in region (AWS::Lambda:EventSourceMapping)
