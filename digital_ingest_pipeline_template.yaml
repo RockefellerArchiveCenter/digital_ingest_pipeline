@@ -140,9 +140,6 @@ Parameters:
       - dev
       - prod
     Default: dev
-  ZodiacApiKey:
-    Type: String
-    Description: API Key for Zodiac instance.
   AuroraArchivematicaApiKey:
     Type: String
     Description: Archivematica API Key for Aurora origin.
@@ -273,7 +270,6 @@ Resources:
         DestinationPath: assembly
         EventsTopicArn: !Ref DigitalIngestTopic
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
-        ZodiacApiKey: !Ref ZodiacApiKey
         AuroraArchivematicaApiKey: !Ref AuroraArchivematicaApiKey
         AuroraArchivematicaUserName: !FindInMap [Archivematica, AuroraUserName, !Ref Environment]
         AuroraArchivematicaUrl: !FindInMap [Archivematica, AuroraUrl, !Ref Environment]

@@ -41,9 +41,6 @@ Parameters:
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
-  ZodiacApiKey: 
-    Type: String
-    Description: API Key for Zodiac.
   ZodiacBaseurl:
     Type: String
     Description: Base URL for Zodiac.
@@ -119,16 +116,6 @@ Resources:
         Application: !Ref ApplicationName
       Type: String
       Value: !Ref ZodiacBaseurl
-  ZodiacApiKeyParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Zodiac API Key.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_API_KEY
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-      Type: String
-      Value: !Ref ZodiacApiKey
 
   AuroraArchivematicaApiKeyParameter:
     Type: AWS::SSM::Parameter
