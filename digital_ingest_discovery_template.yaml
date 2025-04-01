@@ -126,7 +126,7 @@ Resources:
                 Action:
                   - 's3:GetObject'
                 Resource:
-                  - !Ref SourceBucketName
+                  - !Sub arn:aws:s3:::${SourceBucketName}
 
   DiscoverySnsRole:
     Type: AWS::IAM::Role

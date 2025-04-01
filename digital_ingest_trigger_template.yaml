@@ -162,10 +162,10 @@ Resources:
 
   # Subscribe Lambda to SQS
   DigitalIngestNotificationsEventSourceMapping:
-    Type: AWS::Lambda:EventSourceMapping
+    Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn: !Ref TriggerQueueArn
-      FunctionName: !GetAtt DigitalIngestNotificationsFunction.Arn
+      FunctionName: !GetAtt DigitalIngestTriggerFunction.Arn
 
 Outputs:
   DigitizedImageTriggerFunction:

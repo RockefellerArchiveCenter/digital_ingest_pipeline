@@ -331,7 +331,7 @@ Resources:
       TopicArn: !Ref DigitalIngestTopic
       Protocol: sqs
       Endpoint: !GetAtt DigitalIngestNotificationsQueue.Arn
-      FilterPolicy: '"requested_status": [{"exists": false}]'
+      FilterPolicy: {"requested_status": [{"exists": false}]}
       FilterPolicyScope: MessageAttributes
 
   # SNS Subscription for SQS Trigger Queue
@@ -341,7 +341,7 @@ Resources:
       TopicArn: !Ref DigitalIngestTopic
       Protocol: sqs
       Endpoint: !GetAtt DigitalIngestTriggerQueue.Arn
-      FilterPolicy: '"requested_status": [{"exists": true}]'
+      FilterPolicy: {"requested_status": [{"exists": true}]}
       FilterPolicyScope: MessageAttributes
 
   # Notifications Lambda
@@ -361,7 +361,7 @@ Resources:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_notifications
         EventsTopicArn: !Ref DigitalIngestTopic
-        NotificationsQueueArn: !Ref DigitalIngestNotificationsQueue
+        NotificationsQueueArn: !GetAtt DigitalIngestNotificationsQueue.Arn
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
 
   # Trigger Lambda
@@ -384,7 +384,7 @@ Resources:
         ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
         ParentStackName: !Ref AWS::StackName
         SourceBucketName: !FindInMap [DiscoveryService, SourceBucketName, !Ref Environment]
-        TriggerQueueArn: !Ref DigitalIngestTriggerQueue
+        TriggerQueueArn: !GetAtt DigitalIngestTriggerQueue.Arn
 
   # Webhook Lambda
   WebhookLambda:
