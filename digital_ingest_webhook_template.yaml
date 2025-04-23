@@ -31,7 +31,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
       Type: String
-      Value: !Ref DigitalIngestWebhookFunctionRole
+      Value: !GetAtt  DigitalIngestWebhookFunctionRole.Arn
   AwsSnsTopicParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -118,6 +118,14 @@ Resources:
           Value: !Ref ApplicationEnvironment
         - Key: Application
           Value: !Ref ApplicationName
+
+  DigitalIngestWebhookPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DigitalIngestWebhookFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
 
   DigitalIngestWebhookUrl:
     Type: AWS::Lambda::Url

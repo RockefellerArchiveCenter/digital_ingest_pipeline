@@ -20,6 +20,12 @@ Parameters:
   NotificationsQueueArn:
     Type: String
     Description: ARN for notifications SQS Queue
+  SecurityGroup:
+    Type: String
+    Description: ARN for security group to which Lambda should be attached.
+  Subnet:
+    Type: String
+    Description: ARN for subnet to which Lambda should be attached.
   ZodiacBaseurl:
     Type: String
     Description: Base URL for Zodiac API.
@@ -98,6 +104,23 @@ Resources:
                   - 'sns:Publish'
                 Resource:
                   - !Ref EventsTopicArn
+        - PolicyName: DigitalIngestNotificationsVpcPolicy
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "ec2:CreateNetworkInterface"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DescribeSubnets"
+                  - "ec2:DeleteNetworkInterface"
+                  - "ec2:AssignPrivateIpAddresses"
+                  - "ec2:UnassignPrivateIpAddresses"
+                Resource:
+                  - "*"
 
   DigitalIngestNotificationsFunction:
     Type: AWS::Lambda::Function
@@ -116,7 +139,6 @@ Resources:
         Variables:
           ENV: !Ref ApplicationEnvironment
           APP_CONFIG_PATH: !Ref ApplicationName
-          AWS_ROLE_ARN: !GetAtt DigitalIngestNotificationsRole.Arn
       Tags:
         - Key: Environment
           Value: !Ref ApplicationEnvironment
@@ -124,6 +146,11 @@ Resources:
           Value: !Ref ApplicationName
       Architectures:
         - x86_64
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet
 
   NotificationsLogGroup:
     Type: AWS::Logs::LogGroup

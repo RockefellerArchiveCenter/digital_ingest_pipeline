@@ -20,15 +20,6 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  EfsId:
-    Type: String
-    Description: Identifier for temporary storage EFS.
-  EfsAccessPointId:
-    Type: String
-    Description: Identifier for temporary storage EFS access point.
-  EfsRootPath:
-    Type: String
-    Description: Root path at which EFS is mounted.
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic.
@@ -358,16 +349,16 @@ Resources:
           Environment:
             - Name: ENV
               Value: !Ref ApplicationEnvironment
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref TransformationUserAccessKey
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !GetAtt TransformationUserAccessKey.SecretAccessKey
             - Name: AWS_SNS_ROLE_ARN
               Value: !GetAtt TransformationSnsRole.Arn
             - Name: AWS_SSM_ROLE_ARN
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-          MountPoints:
-            - SourceVolume: efs
-              ContainerPath: !Ref EfsRootPath
-              ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -382,15 +373,6 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
-      Volumes:
-        - Name: efs
-          EFSVolumeConfiguration:
-            FilesystemId: !Ref EfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
 
 Outputs:
   TransformationArn:

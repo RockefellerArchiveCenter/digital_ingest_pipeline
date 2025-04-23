@@ -34,26 +34,14 @@ Parameters:
     Type: String
     Description: Location in EFS mount at which files are unpacked.
   SourceBucketName:
+    Type: String 
+    Description: Name of S3 bucket to which source files are uploadad.
+  IiifBucketName:
     Type: String
-    Description: Name of S3 bucket to which packaged files should be delivered.
-  DigitizationEfsId:
-    Type: String
-    Description: Identifier for digitization delivery EFS.
-  DigitizationEfsAccessPointId:
-    Type: String
-    Description: Identifier for digitization delivery EFS access point.
-  DigitizationRootPath:
-    Type: String
-    Description: Root path for digitized delivery.
-  DigitizationPath:
-    Type: String
-    Description: Path to deliver packages of digitized content for further processing.
-  DigitizationUrl:
-    Type: String
-    Description: URL to post to to trigger further processing for packages of digitized content.
+    Description: Name of S3 bucket to deliver packages for IIIF processing.
   EventsTopicArn:
     Type: String
-    Description: ARN for events SNS Topic
+    Description: ARN for events SNS Topic.
 
 Resources:
   ECSTaskExecutionRole:
@@ -118,15 +106,30 @@ Resources:
               - 'sts:AssumeRole'
       Description: 'Allows access to S3 Buckets.'
       Policies:
-        - PolicyName: DiscoveryS3Policy
+        - PolicyName: SourceBucketPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
                   - 's3:GetObject'
+                  - 's3:DeleteObject'
                 Resource:
+                  - !Sub arn:aws:s3:::${SourceBucketName}/*
+              - Effect: Allow
+                Action: 
+                  - 's3:ListBucket'
+                Resource: 
                   - !Sub arn:aws:s3:::${SourceBucketName}
+        - PolicyName: IiifBucketPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub arn:aws:s3:::${IiifBucketName}/*
 
   DiscoverySnsRole:
     Type: AWS::IAM::Role
@@ -172,6 +175,10 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref DiscoveryUserAccessKey
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !GetAtt DiscoveryUserAccessKey.SecretAccessKey
             - Name: AWS_S3_ROLE_ARN
               Value: !GetAtt DiscoveryS3Role.Arn
             - Name: AWS_SNS_ROLE_ARN
@@ -180,20 +187,15 @@ Resources:
               Value: !Sub '${EfsRootPath}/${StoragePath}'
             - Name: TMP_DIR
               Value: !Sub '${EfsRootPath}/${TemporaryPath}'
-            - Name: DIGITIZATION_URL
-              Value: !Ref DigitizationUrl
-            - Name: DIGITIZATION_PATH
-              Value: !Sub '${DigitizationRootPath}/${DigitizationPath}'
             - Name: AWS_SOURCE_BUCKET
               Value: !Ref SourceBucketName
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
+            - Name: AWS_IIIF_BUCKET
+              Value: !Ref IiifBucketName
           MountPoints:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
-              ReadOnly: false
-            - SourceVolume: digitization
-              ContainerPath: !Ref DigitizationRootPath
               ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
@@ -217,14 +219,6 @@ Resources:
             TransitEncryption: ENABLED
             AuthorizationConfig:
               AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
-        - Name: digitization
-          EFSVolumeConfiguration:
-            FilesystemId: !Ref DigitizationEfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref DigitizationEfsAccessPointId
               IAM: DISABLED
 
 Outputs:
