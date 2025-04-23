@@ -35,9 +35,6 @@ Parameters:
   TemporaryPath:
     Type: String
     Description: Location in EFS mount at which files are unpacked.
-  DestinationPath:
-    Type: String
-    Description: Location in EFS mount at which destination files are stored.
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
@@ -56,6 +53,12 @@ Parameters:
   AuroraArchivematicaTransferSource:
     Type: String
     Description: Archivematica transfer source UUID for Aurora origin.
+  AuroraArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for Aurora origin transfer source.
+  AuroraArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for Aurora origin transfer source.
   AuroraArchivematicaProcessingConfig:
     Type: String
     Description: Archivematica processing config name for Aurora origin.
@@ -71,6 +74,12 @@ Parameters:
   DigitizationArchivematicaTransferSource:
     Type: String
     Description: Archivematica transfer source UUID for digitization origin.
+  DigitizationArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for digitization origin transfer source.
+  DigitizationArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for digitization origin transfer source.
   DigitizationArchivematicaProcessingConfig:
     Type: String
     Description: Archivematica processing config name for digitization origin.
@@ -86,6 +95,12 @@ Parameters:
   AvDigitizationArchivematicaTransferSource:
     Type: String
     Description: Archivematica transfer source UUID for AV digitization origin.
+  AvDigitizationArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for AV digitization origin transfer source.
+  AvDigitizationArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for AV digitization origin transfer source.
   AvDigitizationArchivematicaProcessingConfig:
     Type: String
     Description: Archivematica processing config name for AV digitization origin.
@@ -101,6 +116,12 @@ Parameters:
   LegacyDigitalArchivematicaTransferSource:
     Type: String
     Description: Archivematica transfer source UUID for legacy digital origin.
+  LegacyDigitalArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for legacy digital origin transfer source.
+  LegacyDigitalArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for legacy digital origin transfer source.
   LegacyDigitalArchivematicaProcessingConfig:
     Type: String
     Description: Archivematica processing config name for legacy digital origin.
@@ -157,6 +178,26 @@ Resources:
         Application: !Ref ApplicationName
       Type: String
       Value: !Ref AuroraArchivematicaTransferSource
+  AuroraArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for Aurora origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaTransferSourceBucket
+  AuroraArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for Aurora origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AuroraArchivematicaTransferSourcePath
   AuroraArchivematicaProcessingConfigParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -208,6 +249,26 @@ Resources:
         Application: !Ref ApplicationName
       Type: String
       Value: !Ref DigitizationArchivematicaTransferSource
+  DigitizationArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaTransferSourceBucket
+  DigitizationArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref DigitizationArchivematicaTransferSourcePath
   DigitizationArchivematicaProcessingConfigParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -259,6 +320,26 @@ Resources:
         Application: !Ref ApplicationName
       Type: String
       Value: !Ref AvDigitizationArchivematicaTransferSource
+  AvDigitizationArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for AV digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaTransferSourceBucket
+  AvDigitizationArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for AV digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaTransferSourcePath
   AvDigitizationArchivematicaProcessingConfigParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -300,6 +381,26 @@ Resources:
         Application: !Ref ApplicationName
       Type: String
       Value: !Ref LegacyDigitalArchivematicaUrl
+  LegacyDigitalArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for legacy digital origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaTransferSourceBucket
+  LegacyDigitalArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for legacy digtal origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaTransferSourcePath
   LegacyDigitalArchivematicaTransferSourceParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -417,6 +518,34 @@ Resources:
                 Resource:
                   - !Ref EventsTopicArn
 
+  AssemblyS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt AssemblyUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows user to upload packages to S3 bucket.'
+      Policies:
+        - PolicyName: AssemblySNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub arn:aws:s3:::${AuroraArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:aws:s3:::${DigitizationArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:aws:s3:::${AvDigitizationArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:aws:s3:::${LegacyDigitalArchivematicaTransferSourceBucket}/*
+
+
   AssemblyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
@@ -437,18 +566,22 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref AssemblyUserAccessKey
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !GetAtt AssemblyUserAccessKey.SecretAccessKey
             - Name: SRC_DIR
               Value: !Sub '${EfsRootPath}/${SourcePath}'
             - Name: TMP_DIR
               Value: !Sub '${EfsRootPath}/${TemporaryPath}'
-            - Name: DEST_DIR
-              Value: !Sub '${EfsRootPath}/${DestinationPath}'
             - Name: SNS_ROLE_ARN
               Value: !GetAtt AssemblySnsRole.Arn
             - Name: SNS_TOPIC
               Value: !Ref EventsTopicArn
             - Name: SSM_ROLE_ARN
               Value: !GetAtt AssemblySsmRole.Arn
+            - Name: S3_ROLE_ARN
+              Value: !GetAtt AssemblyS3Role.Arn
           MountPoints:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath

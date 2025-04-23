@@ -23,14 +23,26 @@ Parameters:
   ParentStackName:
     Type: String
     Description: Name of the parent stack
-  SourceBucketName:
-    Type: String
-    Description: Name of source bucket
   TriggerQueueArn:
     Type: String 
     Description: ARN of trigger SQS Queue
 
 Resources:
+  # Source bucket
+  SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub rac-${ApplicationEnvironment}-digital-ingest-upload
+      PublicAccessBlockConfiguration: 
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Function: !GetAtt DigitalIngestTriggerFunction.Arn
+            Event: 's3:ObjectCreated:*'
+
   DigitalIngestTriggerFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -52,9 +64,7 @@ Resources:
               - Effect: Allow
                 Action: 'ecs:RunTask'
                 Resource:
-                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/aquarius'
-                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/fornax'
-                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/ursa_major'
+                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/digital_ingest_*'
               - Effect: Allow
                 Action: 'ecs:DescribeServices'
                 Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
@@ -144,21 +154,20 @@ Resources:
         - Key: Application
           Value: !Ref ApplicationName
 
+  S3InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DigitalIngestTriggerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::rac-${ApplicationEnvironment}-digital-ingest-upload
+      SourceAccount: !Ref AWS::AccountId
+
   TriggerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
       RetentionInDays: 90
-
-  # Allow S3 to trigger Lambda
-  DigitalIngestTriggerS3FunctionPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref DigitalIngestTriggerFunction
-      Principal: s3.amazonaws.com
-      SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
-      SourceAccount: !Ref AWS::AccountId
 
   # Subscribe Lambda to SQS
   DigitalIngestNotificationsEventSourceMapping:
@@ -168,6 +177,6 @@ Resources:
       FunctionName: !GetAtt DigitalIngestTriggerFunction.Arn
 
 Outputs:
-  DigitizedImageTriggerFunction:
+  DigitalIngestTriggerFunction:
     Description: "Digital Ingest Trigger Lambda Function ARN"
     Value: !GetAtt DigitalIngestTriggerFunction.Arn
