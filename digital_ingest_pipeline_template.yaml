@@ -22,6 +22,9 @@ Mappings:
     ECSSubnetName:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-0102189437e2babd8"
+    ECSSecurityGroupName:
+      dev: sg-0f98d77d7bb7b4ce6
+      prod: sg-001d3c3a6ebf7b28a
   DiscoveryService:
     IiifBucketName:
       dev: "rac-dev-iiif-upload"
@@ -437,6 +440,7 @@ Resources:
         ApplicationName: digital_ingest_trigger
         ECSClusterName: !Ref DigitalIngestECSCluster
         ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
+        ECSSecurityGroupName: !FindInMap [TriggerLambda, ECSSecurityGroupName, !Ref Environment]
         ParentStackName: !Ref AWS::StackName
         TriggerQueueArn: !GetAtt DigitalIngestTriggerQueue.Arn
 
