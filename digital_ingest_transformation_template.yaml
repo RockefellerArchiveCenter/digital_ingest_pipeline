@@ -32,6 +32,21 @@ Parameters:
   ArchivematicaSsUrl:
     Type: String
     Description: Base URL for Archivematica Storage Service.
+  ArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of Archivematica transfer source bucket.
+  ArchivematicaAuroraTransferSourcePath:
+    Type: String
+    Description: Path in bucket for Aurora origin transfer source.
+  ArchivematicaAvDigitizationTransferSourcePath:
+    Type: String
+    Description: Path in bucket for AV digitization origin transfer source.
+  ArchivematicaDigitizationTransferSourcePath:
+    Type: String
+    Description: Path in bucket for digitization origin transfer source.
+  ArchivematicaLegacyDigitalTransferSourcePath:
+    Type: String
+    Description: Path in bucket for legacy digital origin transfer source.
   ZodiacBaseurl:
     Type: String
     Description: Base URL for Zodiac.
@@ -103,6 +118,57 @@ Resources:
         Application: !Ref ApplicationName
       Type: String
       Value: !Ref ArchivematicaSsUrl
+  ArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of Archivematica transfer source bucket.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaTransferSourceBucket
+  ArchivematicaAuroraTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for Aurora origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaAuroraTransferSourcePath
+  ArchivematicaDigitizationTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaDigitizationTransferSourcePath
+  ArchivematicaAvDigitizationTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for AV digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaAvDigitizationTransferSourcePath
+  ArchivematicaLegacyDigitalTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for legacy digital origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaLegacyDigitalTransferSourcePath
+  
   ZodiacBaseurlParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -330,6 +396,30 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+  
+  TransformationS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt TransformationUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows deletion of objects in S3.'
+      Policies:
+        - PolicyName: TransformationS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:DeleteObject'
+                Resource:
+                  - !Sub arn:aws:s3:::${ArchivematicaTransferSourceBucket}/*
 
   TransformationLogGroup:
     Type: AWS::Logs::LogGroup
@@ -359,6 +449,8 @@ Resources:
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
+            - Name: AWS_S3_ROLE_ARN
+              Value: !GetAtt TransformationS3Role.Arn
           LogConfiguration:
             LogDriver: awslogs
             Options:
