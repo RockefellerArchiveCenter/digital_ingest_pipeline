@@ -3,18 +3,27 @@ Pipeline for ingesting digitized and born digital records into preservation syst
 
 ## Usage
 
-This repository is intended to be deployed in AWS infrastructure.
+This repository contains AWS CloudFormation templates which create the infrastructure for a
+pipeline which integrates with [Aurora](https://github.com/RockefellerArchiveCenter/aurora), 
+[ArchivesSpace](https://archivesspace.org/), and [Archivematica](https://www.archivematica.org/en/).
 
-To provision, authenticate as a user with the necessary permissions, 
-update variables and run the following command:
+## Architecture Diagram
 
-aws cloudformation deploy \
-	--template-file digital_ingest_pipeline_template.yaml \
-	--stack-name digital-ingest-pipeline \
-	--capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
-	--parameter-overrides \
-		ArchivesSpacePassword={password for archivesspace user} \
+![digital_ingest_pipeline.png](Overview diagram of digital ingest pipeline, showing how individual services are connected)
+
+## Related Repositories
+
+- [digital_ingest_assembly](https://github.com/RockefellerArchiveCenter/digital_ingest_assembly/) - creates Archivematica-compliant Submission Information Packages (SIPs).
+- [digital_ingest_discovery](https://github.com/RockefellerArchiveCenter/digital_ingest_discovery/) - discovers 
+and prepares them for processing.
+- [digital_ingest_notifications](https://github.com/RockefellerArchiveCenter/digital_ingest_notifications/) - handles notifications for services associated with ingest of digital content.
+- [digital_ingest_transformation](https://github.com/RockefellerArchiveCenter/digital_ingest_transformation/) - transforms 
+and delivers Accessions, Archival Objects and Digital Objects to ArchivesSpace.
+- [digital_ingest_trigger](https://github.com/RockefellerArchiveCenter/digital_ingest_trigger/) - invokes 
+AWS Elastic Container Service (ECS) tasks based on SQS and S3 messages.
+- [digital_ingest_webhook](https://github.com/RockefellerArchiveCenter/digital_ingest_webhook/) - provides an endpoint 
+for Archivematica post-store callbacks.
 
 ## License
 
-This code is released under the MIT License.
+This code is released under the [MIT License](LICENSE).
