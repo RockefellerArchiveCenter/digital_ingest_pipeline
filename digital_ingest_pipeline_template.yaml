@@ -77,6 +77,9 @@ Mappings:
     Username: 
       dev: digital_ingest_transformation
       prod: digital_ingest_transformation
+    TransferSourceBucket:
+      dev: rac-dev-am-transfer-source
+      prod: rac-prod-am-transfer-source
   ArchivesSpace:
     Baseurl:
       dev: https://as.dev.rockarch.org/api
@@ -296,6 +299,11 @@ Resources:
         ArchivematicaSsApiKey: !Ref ArchivematicaStorageServiceApiKey
         ArchivematicaSsUserName: !FindInMap [ArchivematicaStorageService, Username, !Ref Environment]
         ArchivematicaSsUrl: !FindInMap [ArchivematicaStorageService, Baseurl, !Ref Environment]
+        ArchivematicaTransferSourceBucket: !FindInMap [ArchivematicaStorageService, TransferSourceBucket, !Ref Environment]
+        ArchivematicaAuroraTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
+        ArchivematicaAvDigitizationTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
+        ArchivematicaDigitizationTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
+        ArchivematicaLegacyDigitalTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
         ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
         ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
