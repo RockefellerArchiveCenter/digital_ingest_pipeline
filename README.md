@@ -9,7 +9,7 @@ pipeline which integrates with [Aurora](https://github.com/RockefellerArchiveCen
 
 ## Architecture Diagram
 
-![digital_ingest_pipeline.png](Overview diagram of digital ingest pipeline, showing how individual services are connected)
+![Overview diagram of digital ingest pipeline, showing how individual services are connected](digital_ingest_pipeline.png)
 
 ## Related Repositories
 
