@@ -13,20 +13,16 @@ pipeline designed to integrate with [Aurora](https://github.com/RockefellerArchi
 
 ## Related Repositories
 
-- [digital_ingest_discovery](https://github.com/RockefellerArchiveCenter/digital_ingest_discovery/) - discovers 
+- [digital_ingest_discovery](https://github.com/RockefellerArchiveCenter/digital_ingest_discovery/) - an ECS Task that discovers 
 and prepares packages for processing.
-- [digital_ingest_assembly](https://github.com/RockefellerArchiveCenter/digital_ingest_assembly/) - creates Archivematica-compliant transfers.
-- [digital_ingest_transformation](https://github.com/RockefellerArchiveCenter/digital_ingest_transformation/) - transforms 
-and delivers accessions, archival objects and digital objects to ArchivesSpace.
-- [digital_ingest_notifications](https://github.com/RockefellerArchiveCenter/digital_ingest_notifications/) - handles notifications for services associated with the ingest of digital content.
-- [digital_ingest_trigger](https://github.com/RockefellerArchiveCenter/digital_ingest_trigger/) - invokes 
+- [digital_ingest_assembly](https://github.com/RockefellerArchiveCenter/digital_ingest_assembly/) - an ECS Task that creates Archivematica-compliant transfers.
+- [digital_ingest_transformation](https://github.com/RockefellerArchiveCenter/digital_ingest_transformation/) - an ECS Task that transforms and delivers accessions, archival objects and digital objects to ArchivesSpace.
+- [digital_ingest_notifications](https://github.com/RockefellerArchiveCenter/digital_ingest_notifications/) - a Lambda that handles notifications for services associated with the ingest of digital content.
+- [digital_ingest_trigger](https://github.com/RockefellerArchiveCenter/digital_ingest_trigger/) - a Lambda that invokes 
 AWS Elastic Container Service (ECS) tasks based on SQS and S3 messages.
-- [digital_ingest_webhook](https://github.com/RockefellerArchiveCenter/digital_ingest_webhook/) - provides an endpoint 
-for Archivematica post-store callbacks.
-- [zodiac_backend](https://github.com/RockefellerArchiveCenter/zodiac_backend/) - backend API which serves as the source
-of truth about packages in these services.
-- [zodiac_frontend](https://github.com/RockefellerArchiveCenter/zodiac_frontend/) - user interface to support tracking
-of packages within these services.
+- [digital_ingest_webhook](https://github.com/RockefellerArchiveCenter/digital_ingest_webhook/) - a Lambda that provides an endpoint for Archivematica post-store callbacks.
+- [zodiac_backend](https://github.com/RockefellerArchiveCenter/zodiac_backend/) - a Django application that provides a backend API which serves as the source of truth about packages in these services.
+- [zodiac_frontend](https://github.com/RockefellerArchiveCenter/zodiac_frontend/) - a NextJS/React user interface to support tracking of packages within these services.
 
 ## License
 
