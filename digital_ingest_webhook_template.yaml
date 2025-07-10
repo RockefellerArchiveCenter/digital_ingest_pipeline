@@ -20,6 +20,9 @@ Parameters:
   ArchivematicaApiKey:
     Type: String
     Description: API key that will be delivered with webhook requests
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
   AwsRoleArnParameter:
@@ -30,6 +33,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !GetAtt  DigitalIngestWebhookFunctionRole.Arn
   AwsSnsTopicParameter:
@@ -40,6 +44,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref NotificationsTopicArn
   ArchivematicaApiKeyParameter:
@@ -50,12 +55,20 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivematicaApiKey
 
   DigitalIngestWebhookFunctionRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -113,11 +126,13 @@ Resources:
           APP_CONFIG_PATH: !Ref ApplicationName
       Architectures:
         - x86_64
-      Tags: 
+      Tags:
         - Key: Environment
           Value: !Ref ApplicationEnvironment
         - Key: Application
           Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
   DigitalIngestWebhookPermissions:
     Type: AWS::Lambda::Permission
@@ -136,6 +151,13 @@ Resources:
   WebhookLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
       RetentionInDays: 90
 

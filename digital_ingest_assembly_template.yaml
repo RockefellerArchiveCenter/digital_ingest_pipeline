@@ -125,6 +125,9 @@ Parameters:
   LegacyDigitalArchivematicaProcessingConfig:
     Type: String
     Description: Archivematica processing config name for legacy digital origin.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
   ZodiacBaseUrlParameter:
@@ -135,6 +138,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ZodiacBaseurl
 
@@ -146,6 +150,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaApiKey
   AuroraArchivematicaUserNameParameter:
@@ -156,6 +161,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaUserName
   AuroraArchivematicaUrlParameter:
@@ -166,6 +172,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaUrl
   AuroraArchivematicaTransferSourceParameter:
@@ -176,6 +183,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaTransferSource
   AuroraArchivematicaTransferSourceBucketParameter:
@@ -186,6 +194,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaTransferSourceBucket
   AuroraArchivematicaTransferSourcePathParameter:
@@ -196,6 +205,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaTransferSourcePath
   AuroraArchivematicaProcessingConfigParameter:
@@ -206,6 +216,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaProcessingConfig
 
@@ -217,6 +228,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaApiKey
   DigitizationArchivematicaUserNameParameter:
@@ -227,6 +239,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaUserName
   DigitizationArchivematicaUrlParameter:
@@ -237,6 +250,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaUrl
   DigitizationArchivematicaTransferSourceParameter:
@@ -247,6 +261,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaTransferSource
   DigitizationArchivematicaTransferSourceBucketParameter:
@@ -257,6 +272,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaTransferSourceBucket
   DigitizationArchivematicaTransferSourcePathParameter:
@@ -267,6 +283,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaTransferSourcePath
   DigitizationArchivematicaProcessingConfigParameter:
@@ -277,6 +294,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaProcessingConfig
 
@@ -288,6 +306,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaApiKey
   AvDigitizationArchivematicaUserNameParameter:
@@ -298,6 +317,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaUserName
   AvDigitizationArchivematicaUrlParameter:
@@ -308,6 +328,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaUrl
   AvDigitizationArchivematicaTransferSourceParameter:
@@ -318,6 +339,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaTransferSource
   AvDigitizationArchivematicaTransferSourceBucketParameter:
@@ -328,6 +350,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaTransferSourceBucket
   AvDigitizationArchivematicaTransferSourcePathParameter:
@@ -338,6 +361,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaTransferSourcePath
   AvDigitizationArchivematicaProcessingConfigParameter:
@@ -348,6 +372,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaProcessingConfig
 
@@ -359,6 +384,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaApiKey
   LegacyDigitalArchivematicaUserNameParameter:
@@ -369,6 +395,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaUserName
   LegacyDigitalArchivematicaUrlParameter:
@@ -379,6 +406,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaUrl
   LegacyDigitalArchivematicaTransferSourceBucketParameter:
@@ -389,6 +417,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaTransferSourceBucket
   LegacyDigitalArchivematicaTransferSourcePathParameter:
@@ -399,6 +428,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaTransferSourcePath
   LegacyDigitalArchivematicaTransferSourceParameter:
@@ -409,6 +439,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaTransferSource
   LegacyDigitalArchivematicaProcessingConfigParameter:
@@ -419,12 +450,20 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaProcessingConfig
 
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -464,6 +503,14 @@ Resources:
 
   AssemblyUser:
     Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
   AssemblyUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -472,7 +519,14 @@ Resources:
 
   AssemblySsmRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -496,7 +550,14 @@ Resources:
 
   AssemblySnsRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -521,6 +582,13 @@ Resources:
   AssemblyS3Role:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -548,7 +616,14 @@ Resources:
 
   AssemblyLogGroup:
     Type: AWS::Logs::LogGroup
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
   
@@ -600,6 +675,13 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       Volumes: 
         - Name: efs
           EFSVolumeConfiguration:

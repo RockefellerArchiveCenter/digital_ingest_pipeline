@@ -42,11 +42,21 @@ Parameters:
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -86,6 +96,14 @@ Resources:
 
   DiscoveryUser:
     Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
   DiscoveryUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -94,7 +112,14 @@ Resources:
 
   DiscoveryS3Role:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -133,7 +158,14 @@ Resources:
 
   DiscoverySnsRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -158,6 +190,13 @@ Resources:
   DiscoveryLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
   
@@ -211,6 +250,13 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       Volumes: 
         - Name: efs
           EFSVolumeConfiguration:
