@@ -86,6 +86,9 @@ Parameters:
   DownloadBaseurl:
     Type: String
     Description: Base URL for downloadable assets.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
   ArchivematicaSsApiKeyParameter:
@@ -96,6 +99,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivematicaSsApiKey
   ArchivematicaSsUserNameParameter:
@@ -106,6 +110,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivematicaSsUserName
   ArchivematicaSsUrlParameter:
@@ -116,6 +121,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivematicaSsUrl
   ArchivematicaTransferSourceBucketParameter:
@@ -177,6 +183,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ZodiacBaseurl
   ArchivesSpaceBaseurlParameter:
@@ -187,6 +194,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivesSpaceBaseurl
   ArchivesSpaceUsernameParameter:
@@ -197,6 +205,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivesSpaceUsername
   ArchivesSpacePasswordParameter:
@@ -207,6 +216,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivesSpacePassword
   ArchivesSpaceRepoIdParameter:
@@ -217,6 +227,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ArchivesSpaceRepoId
   AuroraBaseurlParameter:
@@ -227,6 +238,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraBaseurl
   AuroraOauthClientBaseurlParameter:
@@ -237,6 +249,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraOauthClientBaseurl
   AuroraOauthClientIdParameter:
@@ -247,6 +260,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraOauthClientId
   AuroraOauthClientSecretParameter:
@@ -257,6 +271,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraOauthClientSecret
   AuroraAccessionStartedStatusParameter:
@@ -267,6 +282,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraAccessionStartedStatus
   AuroraPackageCompleteStatusParameter:
@@ -277,6 +293,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraPackageCompleteStatus
   IiifManifestBaseurlParameter:
@@ -287,6 +304,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref IiifManifestBaseurl
   DownloadBaseurlParameter:
@@ -297,6 +315,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref DownloadBaseurl
   
@@ -304,6 +323,13 @@ Resources:
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -343,6 +369,14 @@ Resources:
 
   TransformationUser:
     Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
   TransformationUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -352,6 +386,13 @@ Resources:
   TransformationSnsRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -424,6 +465,13 @@ Resources:
   TransformationLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
 
@@ -465,6 +513,13 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
 Outputs:
   TransformationArn:

@@ -29,6 +29,9 @@ Parameters:
   ZodiacBaseurl:
     Type: String
     Description: Base URL for Zodiac API.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
   ZodiacBaseurlParam:
@@ -39,6 +42,7 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ZodiacBaseurl
   SnsTopicParam:
@@ -49,12 +53,20 @@ Resources:
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref EventsTopicArn
 
   DigitalIngestNotificationsRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -144,6 +156,8 @@ Resources:
           Value: !Ref ApplicationEnvironment
         - Key: Application
           Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       Architectures:
         - x86_64
       VpcConfig:
@@ -155,6 +169,13 @@ Resources:
   NotificationsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
       RetentionInDays: 90
 

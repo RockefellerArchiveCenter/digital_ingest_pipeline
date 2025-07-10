@@ -143,7 +143,12 @@ Parameters:
     Description: Aurora OAuth Client ID.
   AuroraOauthClientSecret:
     Type: String
-    Description: Aurora OAuth Client Sectret.
+    Description: Aurora OAuth Client Secret.
+  Workload:
+    Type: String
+    Default: digital_ingest_pipeline
+    Description: Name of workload for this stack.
+
 
 Resources:
   # Temporary Storage
@@ -156,6 +161,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-temporary-storage
+        - Key: Workload
+          Value: !Ref Workload
       LifecyclePolicies:
         - TransitionToIA: AFTER_30_DAYS
       PerformanceMode: generalPurpose
@@ -178,6 +185,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-temporary-storage
+        - Key: Workload
+          Value: !Ref Workload
       FileSystemId: !Ref TemporaryStorage
       PosixUser:
         Uid: "1000"
@@ -201,6 +210,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-ecs-cluster
+        - Key: Workload
+          Value: !Ref Workload
 
   # Discovery ECS Task
   DiscoveryTask:
@@ -226,6 +237,7 @@ Resources:
         TemporaryPath: 'digital_ingest_discovery_tmp'
         SourceBucketName: !Sub rac-${Environment}-digital-ingest-upload
         IiifBucketName: !FindInMap [DiscoveryService, IiifBucketName, !Ref Environment]
+        Workload: !Ref Workload
 
   # Assembly ECS Task
   AssemblyTask:
@@ -278,6 +290,7 @@ Resources:
         LegacyDigitalArchivematicaTransferSourceBucket: !FindInMap [Archivematica, ZodiacPlTransferSourceBucket, !Ref Environment]
         LegacyDigitalArchivematicaTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
         LegacyDigitalArchivematicaProcessingConfig: !FindInMap [Archivematica, ZodiacPlProcessingConfig, !Ref Environment]
+        Workload: !Ref Workload
 
   # Transformation ECS Task
   TransformationTask:
@@ -317,11 +330,19 @@ Resources:
         AuroraPackageCompleteStatus: !FindInMap [Aurora, PackageCompleteStatus, !Ref Environment]
         IiifManifestBaseurl: !FindInMap [Dimes, IiifManifestBaseurl, !Ref Environment]
         DownloadBaseurl: !FindInMap [Dimes, DownloadBaseurl, !Ref Environment]
+        Workload: !Ref Workload
 
   # SNS topic
   DigitalIngestTopic:
     Type: AWS::SNS::Topic
     Properties:
+      Tags: 
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-sns-topic
+        - Key: Workload
+          Value: !Ref Workload
       TopicName: digital-ingest-notifications.fifo
       FifoTopic: true
       ContentBasedDeduplication: true
@@ -336,6 +357,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-notifications-queue
+        - Key: Workload
+          Value: !Ref Workload
   
   DigitalIngestNotificationsQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -366,6 +389,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-notifications-queue
+        - Key: Workload
+          Value: !Ref Workload
   
   DigitalIngestTriggerQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -429,6 +454,7 @@ Resources:
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
         Subnet: !FindInMap [DeployResources, Subnet, !Ref Environment]
         SecurityGroup: !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
+        Workload: !Ref Workload
 
   # Trigger Lambda
   TriggerLambda:
@@ -451,6 +477,7 @@ Resources:
         ECSSecurityGroupName: !FindInMap [TriggerLambda, ECSSecurityGroupName, !Ref Environment]
         ParentStackName: !Ref AWS::StackName
         TriggerQueueArn: !GetAtt DigitalIngestTriggerQueue.Arn
+        Workload: !Ref Workload
 
   # Webhook Lambda
   WebhookLambda:
@@ -470,3 +497,4 @@ Resources:
         ApplicationName: digital_ingest_webhook
         ArchivematicaApiKey: !Ref ArchivematicaCallbackApiKey
         NotificationsTopicArn: !Ref DigitalIngestTopic
+        Workload: !Ref Workload
