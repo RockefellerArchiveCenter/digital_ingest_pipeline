@@ -50,9 +50,6 @@ Parameters:
   AuroraArchivematicaUrl:
     Type: String
     Description: Archivematica dashboard base URL for Aurora origin.
-  AuroraArchivematicaTransferSource:
-    Type: String
-    Description: Archivematica transfer source UUID for Aurora origin.
   AuroraArchivematicaTransferSourceBucket:
     Type: String
     Description: Name of AWS bucket for Aurora origin transfer source.
@@ -71,9 +68,6 @@ Parameters:
   DigitizationArchivematicaUrl:
     Type: String
     Description: Archivematica dashboard base URL for digitization origin.
-  DigitizationArchivematicaTransferSource:
-    Type: String
-    Description: Archivematica transfer source UUID for digitization origin.
   DigitizationArchivematicaTransferSourceBucket:
     Type: String
     Description: Name of AWS bucket for digitization origin transfer source.
@@ -92,9 +86,6 @@ Parameters:
   AvDigitizationArchivematicaUrl:
     Type: String
     Description: Archivematica dashboard base URL for AV digitization origin.
-  AvDigitizationArchivematicaTransferSource:
-    Type: String
-    Description: Archivematica transfer source UUID for AV digitization origin.
   AvDigitizationArchivematicaTransferSourceBucket:
     Type: String
     Description: Name of AWS bucket for AV digitization origin transfer source.
@@ -113,9 +104,6 @@ Parameters:
   LegacyDigitalArchivematicaUrl:
     Type: String
     Description: Archivematica dashboard base URL for legacy digital origin.
-  LegacyDigitalArchivematicaTransferSource:
-    Type: String
-    Description: Archivematica transfer source UUID for legacy digital origin.
   LegacyDigitalArchivematicaTransferSourceBucket:
     Type: String
     Description: Name of AWS bucket for legacy digital origin transfer source.
@@ -175,17 +163,6 @@ Resources:
         Workload: !Ref Workload
       Type: String
       Value: !Ref AuroraArchivematicaUrl
-  AuroraArchivematicaTransferSourceParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Archivematica transfer source UUID for Aurora origin.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-        Workload: !Ref Workload
-      Type: String
-      Value: !Ref AuroraArchivematicaTransferSource
   AuroraArchivematicaTransferSourceBucketParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -253,17 +230,6 @@ Resources:
         Workload: !Ref Workload
       Type: String
       Value: !Ref DigitizationArchivematicaUrl
-  DigitizationArchivematicaTransferSourceParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Archivematica transfer source UUID for digitization origin.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-        Workload: !Ref Workload
-      Type: String
-      Value: !Ref DigitizationArchivematicaTransferSource
   DigitizationArchivematicaTransferSourceBucketParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -331,17 +297,6 @@ Resources:
         Workload: !Ref Workload
       Type: String
       Value: !Ref AvDigitizationArchivematicaUrl
-  AvDigitizationArchivematicaTransferSourceParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Archivematica transfer source UUID for AV digitization origin.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-        Workload: !Ref Workload
-      Type: String
-      Value: !Ref AvDigitizationArchivematicaTransferSource
   AvDigitizationArchivematicaTransferSourceBucketParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -409,6 +364,17 @@ Resources:
         Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaUrl
+  LegacyDigitalArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for legacy digital origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaTransferSourcePath
   LegacyDigitalArchivematicaTransferSourceBucketParameter:
     Type: AWS::SSM::Parameter
     Properties: 
@@ -420,28 +386,6 @@ Resources:
         Workload: !Ref Workload
       Type: String
       Value: !Ref LegacyDigitalArchivematicaTransferSourceBucket
-  LegacyDigitalArchivematicaTransferSourcePathParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Path in bucket for legacy digtal origin transfer source.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_PATH
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-        Workload: !Ref Workload
-      Type: String
-      Value: !Ref LegacyDigitalArchivematicaTransferSourcePath
-  LegacyDigitalArchivematicaTransferSourceParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Archivematica transfer source UUID for legacy digital origin.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-        Workload: !Ref Workload
-      Type: String
-      Value: !Ref LegacyDigitalArchivematicaTransferSource
   LegacyDigitalArchivematicaProcessingConfigParameter:
     Type: AWS::SSM::Parameter
     Properties: 
