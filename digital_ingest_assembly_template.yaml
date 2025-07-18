@@ -1,0 +1,642 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  digital-ingest-assembly
+
+  Assemble Submission Information Packages.
+
+Parameters: 
+  ContainerAccountId:
+    Type: String
+    Description: Account ID under which container repository is located.
+    Default: "817658541382"
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+    Default: dev
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  EfsId:
+    Type: String
+    Description: Identifier for temporary storage EFS.
+  EfsAccessPointId:
+    Type: String
+    Description: Identifier for temporary storage EFS access point.
+  EfsRootPath:
+    Type: String
+    Description: Root path at which EFS is mounted.
+  SourcePath:
+    Type: String
+    Description: Location in EFS mount at which source files are stored.
+  TemporaryPath:
+    Type: String
+    Description: Location in EFS mount at which files are unpacked.
+  EventsTopicArn:
+    Type: String
+    Description: ARN for events SNS Topic
+  ZodiacBaseurl:
+    Type: String
+    Description: Base URL for Zodiac.
+  AuroraArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for Aurora origin.
+  AuroraArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for Aurora origin.
+  AuroraArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for Aurora origin.
+  AuroraArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for Aurora origin transfer source.
+  AuroraArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for Aurora origin transfer source.
+  AuroraArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for Aurora origin.
+  DigitizationArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for digitization origin.
+  DigitizationArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for digitization origin.
+  DigitizationArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for digitization origin.
+  DigitizationArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for digitization origin transfer source.
+  DigitizationArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for digitization origin transfer source.
+  DigitizationArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for digitization origin.
+  AvDigitizationArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for AV digitization origin.
+  AvDigitizationArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for AV digitization origin.
+  AvDigitizationArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for AV digitization origin.
+  AvDigitizationArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for AV digitization origin transfer source.
+  AvDigitizationArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for AV digitization origin transfer source.
+  AvDigitizationArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for AV digitization origin.
+  LegacyDigitalArchivematicaApiKey:
+    Type: String
+    Description: Archivematica API Key for legacy digital origin.
+  LegacyDigitalArchivematicaUserName:
+    Type: String
+    Description: Archivematica user name for legacy digital origin.
+  LegacyDigitalArchivematicaUrl:
+    Type: String
+    Description: Archivematica dashboard base URL for legacy digital origin.
+  LegacyDigitalArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of AWS bucket for legacy digital origin transfer source.
+  LegacyDigitalArchivematicaTransferSourcePath:
+    Type: String
+    Description: Path in bucket for legacy digital origin transfer source.
+  LegacyDigitalArchivematicaProcessingConfig:
+    Type: String
+    Description: Archivematica processing config name for legacy digital origin.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
+
+Resources:
+  ZodiacBaseUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Zodiac base URL.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ZodiacBaseurl
+
+  AuroraArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraArchivematicaApiKey
+  AuroraArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraArchivematicaUserName
+  AuroraArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraArchivematicaUrl
+  AuroraArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for Aurora origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraArchivematicaTransferSourceBucket
+  AuroraArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for Aurora origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraArchivematicaTransferSourcePath
+  AuroraArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for Aurora origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraArchivematicaProcessingConfig
+
+  DigitizationArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DigitizationArchivematicaApiKey
+  DigitizationArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DigitizationArchivematicaUserName
+  DigitizationArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DigitizationArchivematicaUrl
+  DigitizationArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DigitizationArchivematicaTransferSourceBucket
+  DigitizationArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DigitizationArchivematicaTransferSourcePath
+  DigitizationArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DigitizationArchivematicaProcessingConfig
+
+  AvDigitizationArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaApiKey
+  AvDigitizationArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaUserName
+  AvDigitizationArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaUrl
+  AvDigitizationArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for AV digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaTransferSourceBucket
+  AvDigitizationArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for AV digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaTransferSourcePath
+  AvDigitizationArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for AV digitization origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AvDigitizationArchivematicaProcessingConfig
+
+  LegacyDigitalArchivematicaApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica API Key for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_AM_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaApiKey
+  LegacyDigitalArchivematicaUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica User Name for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_AM_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaUserName
+  LegacyDigitalArchivematicaUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica dashboard base URL for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_AM_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaUrl
+  LegacyDigitalArchivematicaTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for legacy digital origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaTransferSourcePath
+  LegacyDigitalArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of AWS bucket for legacy digital origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaTransferSourceBucket
+  LegacyDigitalArchivematicaProcessingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Archivematica processing config name for legacy digital origin.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_PROCESSING_CONFIG
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref LegacyDigitalArchivematicaProcessingConfig
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 
+                  - !GetAtt AssemblyLogGroup.Arn
+        - PolicyName: EcrPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                Resource: 
+                  - !Sub arn:aws:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource: '*'
+
+  AssemblyUser:
+    Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+
+  AssemblyUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      UserName: !Ref AssemblyUser
+
+  AssemblySsmRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt AssemblyUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows access to SSM parameters.'
+      Policies:
+        - PolicyName: AssemblySSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath'
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+
+  AssemblySnsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt AssemblyUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows user to send SNS messages.'
+      Policies:
+        - PolicyName: AssemblySNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref EventsTopicArn
+
+  AssemblyS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt AssemblyUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows user to upload packages to S3 bucket.'
+      Policies:
+        - PolicyName: AssemblySNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub arn:aws:s3:::${AuroraArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:aws:s3:::${DigitizationArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:aws:s3:::${AvDigitizationArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:aws:s3:::${LegacyDigitalArchivematicaTransferSourceBucket}/*
+
+
+  AssemblyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
+      RetentionInDays: 90
+  
+  AssemblyEcsTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Cpu: "1024"
+      Memory: "3072"
+      ContainerDefinitions: 
+        - Name: !Ref ApplicationName
+          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:${ApplicationEnvironment}"
+          Essential: true
+          Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref ApplicationEnvironment
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref AssemblyUserAccessKey
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !GetAtt AssemblyUserAccessKey.SecretAccessKey
+            - Name: SRC_DIR
+              Value: !Sub '${EfsRootPath}/${SourcePath}'
+            - Name: TMP_DIR
+              Value: !Sub '${EfsRootPath}/${TemporaryPath}'
+            - Name: SNS_ROLE_ARN
+              Value: !GetAtt AssemblySnsRole.Arn
+            - Name: SNS_TOPIC
+              Value: !Ref EventsTopicArn
+            - Name: SSM_ROLE_ARN
+              Value: !GetAtt AssemblySsmRole.Arn
+            - Name: S3_ROLE_ARN
+              Value: !GetAtt AssemblyS3Role.Arn
+          MountPoints:
+            - SourceVolume: efs
+              ContainerPath: !Ref EfsRootPath
+              ReadOnly: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              "awslogs-group": !Ref AssemblyLogGroup
+              "awslogs-region": !Ref AWS::Region
+              "awslogs-stream-prefix": "ecs"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Family: !Ref ApplicationName
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      Volumes: 
+        - Name: efs
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref EfsId
+            RootDirectory: /
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !Ref EfsAccessPointId
+              IAM: DISABLED
+
+Outputs:
+  AssemblyArn:
+    Description: Assembly ECS Task Definition ARN
+    Value: !Ref AssemblyEcsTask

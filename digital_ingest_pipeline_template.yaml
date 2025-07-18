@@ -18,33 +18,96 @@ Mappings:
     Subnet:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-02e68cd17b1abfc14"
-  NotificationsLambda:
-    ZodiacBaseurl:
-      dev: "https://zodiac.dev.rockarch.org/api"
-      prod: "https://zodiac.rockarch.org/api"
   TriggerLambda:
     ECSSubnetName:
       dev: "subnet-098df07b0ab91cb1d"
       prod: "subnet-0102189437e2babd8"
+    ECSSecurityGroupName:
+      dev: sg-0f98d77d7bb7b4ce6
+      prod: sg-001d3c3a6ebf7b28a
   DiscoveryService:
-    SourceBucketName:
-      dev: "rac-dev-digital-ingest-upload"
-      prod: "rac-prod-digital-ingest-upload"
-    DigitizationEfsId:
-      dev: "fs-4ecb5eae"
-      prod: "fs-b9197b5a"
-    DigitizationEfsAccessPointId:
-      dev: "fsap-0d530b00165a90a27"
-      prod: "" # TODO
-    DigitizationRootPath:
-      dev: "pictor"
-      prod: "pictor"
-    DigitizationPath:
-      dev: "src"
-      prod: "src"
-    DigitizationUrl:
-      dev: "https://zodiac.dev.rockarch.org:8012"
-      prod: "https://zodiac.rockarch.org:8012"
+    IiifBucketName:
+      dev: "rac-dev-iiif-upload"
+      prod: "rac-prod-iiif-upload"
+  Zodiac:
+    Baseurl:
+      dev: "https://zodiac-backend.dev.rockarch.org/"
+      prod: "https://zodiac-backend.rockarch.org/"
+  Archivematica:
+    ZodiacPlUsername:
+      dev: digital_ingest_assembly
+      prod: digital_ingest_assembly
+    ZodiacPlUrl:
+      dev: http://archivematica-zodiac.dev.rockarch.org
+      prod: http://archivematica-zodiac.rockarch.org
+    ZodiacPlTransferSourceBucket:
+      dev: rac-dev-am-transfer-source
+      prod: rac-prod-am-transfer-source
+    ZodiacPlTransferSourcePath:
+      dev: zodiac
+      prod: zodiac
+    ZodiacPlProcessingConfig:
+      dev: automated
+      prod: automated
+    MainPlUsername:
+      dev: digital_ingest_assembly
+      prod: digital_ingest_assembly
+    MainPlUrl:
+      dev: http://archivematica.dev.rockarch.org
+      prod: http://archivematica.rockarch.org
+    MainPlTransferSourceBucket:
+      dev: rac-dev-am-transfer-source
+      prod: rac-prod-am-transfer-source
+    MainPlTransferSourcePath:
+      dev: main
+      prod: main
+    MainPlProcessingConfig:
+      dev: automated
+      prod: automated
+  ArchivematicaStorageService:
+    Baseurl:
+      dev: http://archivematica-storage-service.dev.rockarch.org:8000
+      prod: http://archivematica-storage-service.rockarch.org:8000
+    Username: 
+      dev: digital_ingest_transformation
+      prod: digital_ingest_transformation
+    TransferSourceBucket:
+      dev: rac-dev-am-transfer-source
+      prod: rac-prod-am-transfer-source
+  ArchivesSpace:
+    Baseurl:
+      dev: https://as.dev.rockarch.org/api
+      prod: https://as.rockarch.org/api
+    Username:
+      dev: digital_ingest_transformation
+      prod: digital_ingest_transformation
+    RepoId:
+      dev: 2
+      prod: 2
+  Aurora:
+    Baseurl:
+      dev: https://aurora.dev.rockarch.org/api/
+      prod: https://aurora.rockarch.org/api/
+    OauthClientBaseurl:
+      dev: https://rac-aurora-dev.auth.us-east-1.amazoncognito.com
+      prod: https://rac-aurora-prod.auth.us-east-1.amazoncognito.com
+    AccessionStartedStatus:
+      dev: 30
+      prod: 30
+    PackageCompleteStatus:
+      dev: 90
+      prod: 90
+  Dimes:
+    IiifManifestBaseurl:
+      dev: https://iiif.dev.rockarch.org/manifests
+      prod: https://iiif.rockarch.org/manifests
+    DownloadBaseurl:
+      dev: https://iiif.dev.rockarch.org/pdf
+      prod: https://iiif.rockarch.org/pdf
+  Efs:
+    StorageDir:
+      dev: storage
+      prod: storage
 
 Parameters:
   Environment:
@@ -54,6 +117,32 @@ Parameters:
       - dev
       - prod
     Default: dev
+  ArchivematicaZodiacPlApiKey:
+    Type: String
+    Description: Archivematica API Key for Aurora origin.
+  ArchivematicaMainPlApiKey:
+    Type: String
+    Description: Archivematica API Key for digitization origin.
+  ArchivematicaCallbackApiKey:
+    Type: String
+    Description: Archivematica API Key sent in post-store requests.
+  ArchivematicaStorageServiceApiKey:
+    Type: String
+    Description: Archivematica Storage Service API Key.
+  ArchivesSpaceTransformationPassword:
+    Type: String
+    Description: ArchivesSpace password for user associated with transformation service.
+  AuroraOauthClientId:
+    Type: String
+    Description: Aurora OAuth Client ID.
+  AuroraOauthClientSecret:
+    Type: String
+    Description: Aurora OAuth Client Secret.
+  Workload:
+    Type: String
+    Default: digital_ingest_pipeline
+    Description: Name of workload for this stack.
+
 
 Resources:
   # Temporary Storage
@@ -66,10 +155,20 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-temporary-storage
+        - Key: Workload
+          Value: !Ref Workload
       LifecyclePolicies:
         - TransitionToIA: AFTER_30_DAYS
       PerformanceMode: generalPurpose
       ThroughputMode: elastic
+  
+  MountTargetResource1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref TemporaryStorage
+      SubnetId: !FindInMap [DeployResources, Subnet, !Ref Environment]
+      SecurityGroups:
+      - !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
 
   # Temporary Storage Access Point
   TemporaryStorageAccessPoint:
@@ -80,6 +179,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-temporary-storage
+        - Key: Workload
+          Value: !Ref Workload
       FileSystemId: !Ref TemporaryStorage
       PosixUser:
         Uid: "1000"
@@ -103,6 +204,8 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-ecs-cluster
+        - Key: Workload
+          Value: !Ref Workload
 
   # Discovery ECS Task
   DiscoveryTask:
@@ -124,14 +227,11 @@ Resources:
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
         EventsTopicArn: !Ref DigitalIngestTopic
-        StoragePath: 'storage'
+        StoragePath: !FindInMap [Efs, StorageDir, !Ref Environment]
         TemporaryPath: 'digital_ingest_discovery_tmp'
-        SourceBucketName: !FindInMap [DiscoveryService, SourceBucketName, !Ref Environment]
-        DigitizationEfsId: !FindInMap [DiscoveryService, DigitizationEfsId, !Ref Environment]
-        DigitizationEfsAccessPointId: !FindInMap [DiscoveryService, DigitizationEfsAccessPointId, !Ref Environment]
-        DigitizationRootPath: !FindInMap [DiscoveryService, DigitizationRootPath, !Ref Environment]
-        DigitizationPath: !FindInMap [DiscoveryService, DigitizationPath, !Ref Environment]
-        DigitizationUrl: !FindInMap [DiscoveryService, DigitizationUrl, !Ref Environment]
+        SourceBucketName: !Sub rac-${Environment}-digital-ingest-upload
+        IiifBucketName: !FindInMap [DiscoveryService, IiifBucketName, !Ref Environment]
+        Workload: !Ref Workload
 
   # Assembly ECS Task
   AssemblyTask:
@@ -152,10 +252,35 @@ Resources:
         EfsId: !Ref TemporaryStorage
         EfsAccessPointId: !Ref TemporaryStorageAccessPoint
         EfsRootPath: '/efs'
-        SourcePath: discovery
+        SourcePath: !FindInMap [Efs, StorageDir, !Ref Environment]
         TemporaryPath: assembly_tmp
-        DestinationPath: assembly
         EventsTopicArn: !Ref DigitalIngestTopic
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
+        AuroraArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey
+        AuroraArchivematicaUserName: !FindInMap [Archivematica, ZodiacPlUsername, !Ref Environment]
+        AuroraArchivematicaUrl: !FindInMap [Archivematica, ZodiacPlUrl, !Ref Environment]
+        AuroraArchivematicaTransferSourceBucket: !FindInMap [Archivematica, ZodiacPlTransferSourceBucket, !Ref Environment]
+        AuroraArchivematicaTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
+        AuroraArchivematicaProcessingConfig: !FindInMap [Archivematica, ZodiacPlProcessingConfig, !Ref Environment]
+        DigitizationArchivematicaApiKey: !Ref ArchivematicaMainPlApiKey
+        DigitizationArchivematicaUserName: !FindInMap [Archivematica,MainPlUsername, !Ref Environment]
+        DigitizationArchivematicaUrl: !FindInMap [Archivematica, MainPlUrl, !Ref Environment]
+        DigitizationArchivematicaTransferSourceBucket: !FindInMap [Archivematica, MainPlTransferSourceBucket, !Ref Environment]
+        DigitizationArchivematicaTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
+        DigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, MainPlProcessingConfig, !Ref Environment]
+        AvDigitizationArchivematicaApiKey: !Ref ArchivematicaMainPlApiKey
+        AvDigitizationArchivematicaUserName: !FindInMap [Archivematica, MainPlUsername, !Ref Environment]
+        AvDigitizationArchivematicaUrl: !FindInMap [Archivematica, MainPlUrl, !Ref Environment]
+        AvDigitizationArchivematicaTransferSourceBucket: !FindInMap [Archivematica, MainPlTransferSourceBucket, !Ref Environment]
+        AvDigitizationArchivematicaTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
+        AvDigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, MainPlProcessingConfig, !Ref Environment]
+        LegacyDigitalArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey
+        LegacyDigitalArchivematicaUserName: !FindInMap [Archivematica, ZodiacPlUsername, !Ref Environment]
+        LegacyDigitalArchivematicaUrl: !FindInMap [Archivematica, ZodiacPlUrl, !Ref Environment]
+        LegacyDigitalArchivematicaTransferSourceBucket: !FindInMap [Archivematica, ZodiacPlTransferSourceBucket, !Ref Environment]
+        LegacyDigitalArchivematicaTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
+        LegacyDigitalArchivematicaProcessingConfig: !FindInMap [Archivematica, ZodiacPlProcessingConfig, !Ref Environment]
+        Workload: !Ref Workload
 
   # Transformation ECS Task
   TransformationTask:
@@ -173,36 +298,108 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_transformation
-        EfsId: !Ref TemporaryStorage
-        EfsAccessPointId: !Ref TemporaryStorageAccessPoint
-        EfsRootPath: '/efs'
         EventsTopicArn: !Ref DigitalIngestTopic
+        ArchivematicaSsApiKey: !Ref ArchivematicaStorageServiceApiKey
+        ArchivematicaSsUserName: !FindInMap [ArchivematicaStorageService, Username, !Ref Environment]
+        ArchivematicaSsUrl: !FindInMap [ArchivematicaStorageService, Baseurl, !Ref Environment]
+        ArchivematicaTransferSourceBucket: !FindInMap [ArchivematicaStorageService, TransferSourceBucket, !Ref Environment]
+        ArchivematicaAuroraTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
+        ArchivematicaAvDigitizationTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
+        ArchivematicaDigitizationTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
+        ArchivematicaLegacyDigitalTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
+        ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
+        ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
+        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
+        ArchivesSpaceRepoId: !FindInMap [ArchivesSpace, RepoId, !Ref Environment]
+        AuroraBaseurl: !FindInMap [Aurora, Baseurl, !Ref Environment]
+        AuroraOauthClientBaseurl: !FindInMap [Aurora, OauthClientBaseurl, !Ref Environment]
+        AuroraOauthClientId: !Ref AuroraOauthClientId
+        AuroraOauthClientSecret: !Ref AuroraOauthClientSecret
+        AuroraAccessionStartedStatus: !FindInMap [Aurora, AccessionStartedStatus, !Ref Environment]
+        AuroraPackageCompleteStatus: !FindInMap [Aurora, PackageCompleteStatus, !Ref Environment]
+        IiifManifestBaseurl: !FindInMap [Dimes, IiifManifestBaseurl, !Ref Environment]
+        DownloadBaseurl: !FindInMap [Dimes, DownloadBaseurl, !Ref Environment]
+        Workload: !Ref Workload
 
   # SNS topic
   DigitalIngestTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: digital-ingest-notifications
+      Tags: 
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: digital-ingest-sns-topic
+        - Key: Workload
+          Value: !Ref Workload
+      TopicName: digital-ingest-notifications.fifo
+      FifoTopic: true
+      ContentBasedDeduplication: true
 
   # SQS Notifications Queue
   DigitalIngestNotificationsQueue:
     Type: AWS::SQS::Queue
     Properties:
+      FifoQueue: true
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-notifications-queue
+        - Key: Workload
+          Value: !Ref Workload
+  
+  DigitalIngestNotificationsQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - sns.amazonaws.com
+            Action:
+              - sqs:SendMessage
+            Resource: !GetAtt DigitalIngestNotificationsQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref DigitalIngestTopic
+      Queues:
+        - !Ref DigitalIngestNotificationsQueue
 
   # SQS Trigger Queue
   DigitalIngestTriggerQueue:
     Type: AWS::SQS::Queue
     Properties:
+      FifoQueue: true
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Application
           Value: digital-ingest-notifications-queue
+        - Key: Workload
+          Value: !Ref Workload
+  
+  DigitalIngestTriggerQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal: 
+            Service: 
+              - sns.amazonaws.com
+          Action:
+            - sqs:SendMessage
+          Resource: !GetAtt DigitalIngestTriggerQueue.Arn
+          Condition:
+            ArnEquals:
+              aws:SourceArn: !Ref DigitalIngestTopic
+      Queues:
+        - !Ref DigitalIngestTriggerQueue
 
   # SNS Subscription for SQS Notifications Queue
   DigitalIngestNotificationsQueueSubscription:
@@ -210,8 +407,9 @@ Resources:
     Properties:
       TopicArn: !Ref DigitalIngestTopic
       Protocol: sqs
+      RawMessageDelivery: true
       Endpoint: !GetAtt DigitalIngestNotificationsQueue.Arn
-      FilterPolicy: '"requested_status": [{"exists": false}]'
+      FilterPolicy: {"outcome": ["STARTED", "SUCCESS", "FAILURE"]}
       FilterPolicyScope: MessageAttributes
 
   # SNS Subscription for SQS Trigger Queue
@@ -220,8 +418,9 @@ Resources:
     Properties:
       TopicArn: !Ref DigitalIngestTopic
       Protocol: sqs
+      RawMessageDelivery: true
       Endpoint: !GetAtt DigitalIngestTriggerQueue.Arn
-      FilterPolicy: '"requested_status": [{"exists": true}]'
+      FilterPolicy: {"requested_status": ["START"]}
       FilterPolicyScope: MessageAttributes
 
   # Notifications Lambda
@@ -241,8 +440,11 @@ Resources:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_notifications
         EventsTopicArn: !Ref DigitalIngestTopic
-        NotificationsQueueArn: !Ref DigitalIngestNotificationsQueue
-        ZodiacBaseurl: !FindInMap [NotificationsLambda, ZodiacBaseurl, !Ref Environment]
+        NotificationsQueueArn: !GetAtt DigitalIngestNotificationsQueue.Arn
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
+        Subnet: !FindInMap [DeployResources, Subnet, !Ref Environment]
+        SecurityGroup: !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
+        Workload: !Ref Workload
 
   # Trigger Lambda
   TriggerLambda:
@@ -262,9 +464,10 @@ Resources:
         ApplicationName: digital_ingest_trigger
         ECSClusterName: !Ref DigitalIngestECSCluster
         ECSSubnetName: !FindInMap [TriggerLambda, ECSSubnetName, !Ref Environment]
+        ECSSecurityGroupName: !FindInMap [TriggerLambda, ECSSecurityGroupName, !Ref Environment]
         ParentStackName: !Ref AWS::StackName
-        SourceBucketName: !FindInMap [DiscoveryService, SourceBucketName, !Ref Environment]
-        TriggerQueueArn: !Ref DigitalIngestTriggerQueue
+        TriggerQueueArn: !GetAtt DigitalIngestTriggerQueue.Arn
+        Workload: !Ref Workload
 
   # Webhook Lambda
   WebhookLambda:
@@ -282,5 +485,6 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_webhook
-        ParentStackName: !Ref AWS::StackName
+        ArchivematicaApiKey: !Ref ArchivematicaCallbackApiKey
         NotificationsTopicArn: !Ref DigitalIngestTopic
+        Workload: !Ref Workload

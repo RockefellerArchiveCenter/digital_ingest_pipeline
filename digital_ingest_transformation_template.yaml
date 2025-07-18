@@ -20,24 +20,316 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  EfsId:
-    Type: String
-    Description: Identifier for temporary storage EFS.
-  EfsAccessPointId:
-    Type: String
-    Description: Identifier for temporary storage EFS access point.
-  EfsRootPath:
-    Type: String
-    Description: Root path at which EFS is mounted.
   EventsTopicArn:
     Type: String
-    Description: ARN for events SNS Topic
+    Description: ARN for events SNS Topic.
+  ArchivematicaSsApiKey:
+    Type: String
+    Description: API Key for Archivematica Storage Service.
+  ArchivematicaSsUserName:
+    Type: String
+    Description: User for Archivematica Storage Service.
+  ArchivematicaSsUrl:
+    Type: String
+    Description: Base URL for Archivematica Storage Service.
+  ArchivematicaTransferSourceBucket:
+    Type: String
+    Description: Name of Archivematica transfer source bucket.
+  ArchivematicaAuroraTransferSourcePath:
+    Type: String
+    Description: Path in bucket for Aurora origin transfer source.
+  ArchivematicaAvDigitizationTransferSourcePath:
+    Type: String
+    Description: Path in bucket for AV digitization origin transfer source.
+  ArchivematicaDigitizationTransferSourcePath:
+    Type: String
+    Description: Path in bucket for digitization origin transfer source.
+  ArchivematicaLegacyDigitalTransferSourcePath:
+    Type: String
+    Description: Path in bucket for legacy digital origin transfer source.
+  ZodiacBaseurl:
+    Type: String
+    Description: Base URL for Zodiac.
+  ArchivesSpaceBaseurl:
+    Type: String
+    Description: Base URL for ArchivesSpace.
+  ArchivesSpaceUsername:
+    Type: String
+    Description: Username for ArchivesSpace.
+  ArchivesSpacePassword:
+    Type: String
+    Description: Password for ArchivesSpace.
+  ArchivesSpaceRepoId:
+    Type: String
+    Description: Repo ID for ArchivesSpace.
+  AuroraBaseurl:
+    Type: String
+    Description: Base URL for Aurora.
+  AuroraOauthClientBaseurl:
+    Type: String
+    Description: OAuth client base URL for Aurora.
+  AuroraOauthClientId:
+    Type: String
+    Description: OAuth Client ID for Aurora
+  AuroraOauthClientSecret:
+    Type: String
+    Description: OAuth Client Secret for Aurora.
+  AuroraAccessionStartedStatus:
+    Type: String
+    Description: Process status for accession started in Aurora.
+  AuroraPackageCompleteStatus:
+    Type: String
+    Description: Process status for package complete in Aurora.
+  IiifManifestBaseurl:
+    Type: String
+    Description: Base URL for IIIF Manifests.
+  DownloadBaseurl:
+    Type: String
+    Description: Base URL for downloadable assets.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
-  # An ECS task definition that defines the container
+  ArchivematicaSsApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: API Key for Archivematica Storage Service.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_SS_API_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivematicaSsApiKey
+  ArchivematicaSsUserNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: User for Archivematica Storage Service.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_SS_USER_NAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivematicaSsUserName
+  ArchivematicaSsUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Archivematica Storage Service.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_SS_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivematicaSsUrl
+  ArchivematicaTransferSourceBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Name of Archivematica transfer source bucket.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_TRANSFER_SOURCE_BUCKET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaTransferSourceBucket
+  ArchivematicaAuroraTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for Aurora origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaAuroraTransferSourcePath
+  ArchivematicaDigitizationTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaDigitizationTransferSourcePath
+  ArchivematicaAvDigitizationTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for AV digitization origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AV_DIGITIZATION_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaAvDigitizationTransferSourcePath
+  ArchivematicaLegacyDigitalTransferSourcePathParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Path in bucket for legacy digital origin transfer source.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/LEGACY_DIGITAL_TRANSFER_SOURCE_PATH
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivematicaLegacyDigitalTransferSourcePath
+  
+  ZodiacBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ARN for role with permissions for lambda.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ZodiacBaseurl
+  ArchivesSpaceBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpaceBaseurl
+  ArchivesSpaceUsernameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Username for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_USERNAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpaceUsername
+  ArchivesSpacePasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Password for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_PASSWORD
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpacePassword
+  ArchivesSpaceRepoIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Repository ID for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_REPO_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpaceRepoId
+  AuroraBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Aurora.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraBaseurl
+  AuroraOauthClientBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Aurora OAuth client.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_OAUTH_CLIENT_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraOauthClientBaseurl
+  AuroraOauthClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Client ID for Aurora OAuth client.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_OAUTH_CLIENT_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraOauthClientId
+  AuroraOauthClientSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Client Secret for Aurora OAuth client.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_OAUTH_CLIENT_SECRET
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraOauthClientSecret
+  AuroraAccessionStartedStatusParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Process status for accessioning started in Aurora.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_ACCESSION_STARTED_STATUS
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraAccessionStartedStatus
+  AuroraPackageCompleteStatusParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Process status for package complete in Aurora.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AURORA_PACKAGE_COMPLETE_STATUS
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AuroraPackageCompleteStatus
+  IiifManifestBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for IIIF manifests.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/IIIF_MANIFEST_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref IiifManifestBaseurl
+  DownloadBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for downloadable assets.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/DOWNLOAD_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DownloadBaseurl
+  
+
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -77,6 +369,14 @@ Resources:
 
   TransformationUser:
     Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
   TransformationUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -86,6 +386,13 @@ Resources:
   TransformationSnsRole:
     Type: AWS::IAM::Role
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -130,10 +437,41 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+  
+  TransformationS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt TransformationUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows deletion of objects in S3.'
+      Policies:
+        - PolicyName: TransformationS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:DeleteObject'
+                Resource:
+                  - !Sub arn:aws:s3:::${ArchivematicaTransferSourceBucket}/*
 
   TransformationLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
 
@@ -149,22 +487,18 @@ Resources:
           Environment:
             - Name: ENV
               Value: !Ref ApplicationEnvironment
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref TransformationUserAccessKey
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !GetAtt TransformationUserAccessKey.SecretAccessKey
             - Name: AWS_SNS_ROLE_ARN
               Value: !GetAtt TransformationSnsRole.Arn
             - Name: AWS_SSM_ROLE_ARN
               Value: !GetAtt TransformationSsmRole.Arn
             - Name: AWS_SNS_TOPIC
               Value: !Ref EventsTopicArn
-          Tags:
-            - Key: Environment
-              Value: !Ref ApplicationEnvironment
-            - Key: Application
-              Value: !Ref ApplicationName
-
-          MountPoints:
-            - SourceVolume: efs
-              ContainerPath: !Ref EfsRootPath
-              ReadOnly: false
+            - Name: AWS_S3_ROLE_ARN
+              Value: !GetAtt TransformationS3Role.Arn
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -179,15 +513,13 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
-      Volumes:
-        - Name: efs
-          EFSVolumeConfiguration:
-            FilesystemId: !Ref EfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
 
 Outputs:
   TransformationArn:

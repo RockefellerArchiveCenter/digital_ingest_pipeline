@@ -20,37 +20,53 @@ Parameters:
   NotificationsQueueArn:
     Type: String
     Description: ARN for notifications SQS Queue
+  SecurityGroup:
+    Type: String
+    Description: ARN for security group to which Lambda should be attached.
+  Subnet:
+    Type: String
+    Description: ARN for subnet to which Lambda should be attached.
   ZodiacBaseurl:
     Type: String
     Description: Base URL for Zodiac API.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
 
 Resources:
   ZodiacBaseurlParam:
     Type: AWS::SSM::Parameter
     Properties: 
-      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
       Description: Base URL for Zodiac API.
       Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref ZodiacBaseurl
   SnsTopicParam:
     Type: AWS::SSM::Parameter
     Properties: 
-      AllowedPattern: "^[A-Za-z0-9\\-\\_]+$"
       Description: ARN for SNS topic to send messages to.
       Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/SNS_TOPIC
       Tags: 
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
+        Workload: !Ref Workload
       Type: String
       Value: !Ref EventsTopicArn
 
   DigitalIngestNotificationsRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -100,6 +116,23 @@ Resources:
                   - 'sns:Publish'
                 Resource:
                   - !Ref EventsTopicArn
+        - PolicyName: DigitalIngestNotificationsVpcPolicy
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "ec2:CreateNetworkInterface"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DescribeSubnets"
+                  - "ec2:DeleteNetworkInterface"
+                  - "ec2:AssignPrivateIpAddresses"
+                  - "ec2:UnassignPrivateIpAddresses"
+                Resource:
+                  - "*"
 
   DigitalIngestNotificationsFunction:
     Type: AWS::Lambda::Function
@@ -118,24 +151,36 @@ Resources:
         Variables:
           ENV: !Ref ApplicationEnvironment
           APP_CONFIG_PATH: !Ref ApplicationName
-          AWS_ROLE_ARN: !GetAtt DigitalIngestNotificationsRole.Arn
-          AWS_REGION: !Ref AWS::Region
       Tags:
         - Key: Environment
           Value: !Ref ApplicationEnvironment
         - Key: Application
           Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       Architectures:
         - x86_64
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet
 
   NotificationsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
       LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
       RetentionInDays: 90
 
   DigitalIngestNotificationsEventSourceMapping:
-    Type: AWS::Lambda:EventSourceMapping
+    Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn: !Ref NotificationsQueueArn
       FunctionName: !GetAtt DigitalIngestNotificationsFunction.Arn
