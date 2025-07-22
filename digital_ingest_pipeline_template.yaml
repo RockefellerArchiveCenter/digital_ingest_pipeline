@@ -14,10 +14,10 @@ Mappings:
       prod: digital_ingest_pipeline
     SecurityGroup:
       dev: "sg-0f98d77d7bb7b4ce6"
-      prod: "sg-0a568e8a6ff39b710"
+      prod: "sg-001d3c3a6ebf7b28a"
     Subnet:
       dev: "subnet-098df07b0ab91cb1d"
-      prod: "subnet-02e68cd17b1abfc14"
+      prod: "subnet-0102189437e2babd8"
   TriggerLambda:
     ECSSubnetName:
       dev: "subnet-098df07b0ab91cb1d"
