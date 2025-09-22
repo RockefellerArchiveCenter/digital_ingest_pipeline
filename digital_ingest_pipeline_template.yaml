@@ -199,6 +199,9 @@ Resources:
       CapacityProviders: 
         - FARGATE
       ClusterName: DigitalIngestCluster
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
       Tags: 
         - Key: Environment
           Value: !Ref Environment
