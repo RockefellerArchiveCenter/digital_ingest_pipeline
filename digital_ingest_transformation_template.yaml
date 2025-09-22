@@ -499,6 +499,7 @@ Resources:
               Value: !Ref EventsTopicArn
             - Name: AWS_S3_ROLE_ARN
               Value: !GetAtt TransformationS3Role.Arn
+          ReadonlyRootFilesystem: true
           LogConfiguration:
             LogDriver: awslogs
             Options:
