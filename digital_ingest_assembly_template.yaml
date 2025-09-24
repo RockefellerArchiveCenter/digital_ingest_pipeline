@@ -439,11 +439,20 @@ Resources:
                   - 'ecr:GetDownloadUrlForLayer'
                   - 'ecr:BatchGetImage'
                 Resource: 
-                  - !Sub arn:aws:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+                  - !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
               - Effect: Allow
                 Action:
                   - 'ecr:GetAuthorizationToken'
                 Resource: '*'
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameters'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}/*
 
   AssemblyUser:
     Type: AWS::IAM::User
@@ -460,6 +469,30 @@ Resources:
     Type: AWS::IAM::AccessKey
     Properties: 
       UserName: !Ref AssemblyUser
+
+  AssemblyUserIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key ID for AssemblyUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_ACCESS_KEY_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref AssemblyUserAccessKey
+
+  AssemblyUserKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key for AssemblyUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_SECRET_ACCESS_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !GetAtt AssemblyUserAccessKey.SecretAccessKey
 
   AssemblySsmRole:
     Type: AWS::IAM::Role
@@ -490,7 +523,7 @@ Resources:
                 Action: 
                   - 'ssm:GetParametersByPath'
                 Resource:
-                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
 
   AssemblySnsRole:
     Type: AWS::IAM::Role
@@ -552,10 +585,10 @@ Resources:
                 Action: 
                   - 's3:PutObject'
                 Resource:
-                  - !Sub arn:aws:s3:::${AuroraArchivematicaTransferSourceBucket}/*
-                  - !Sub arn:aws:s3:::${DigitizationArchivematicaTransferSourceBucket}/*
-                  - !Sub arn:aws:s3:::${AvDigitizationArchivematicaTransferSourceBucket}/*
-                  - !Sub arn:aws:s3:::${LegacyDigitalArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${AuroraArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${DigitizationArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${AvDigitizationArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${LegacyDigitalArchivematicaTransferSourceBucket}/*
 
 
   AssemblyLogGroup:
@@ -585,10 +618,6 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
-            - Name: AWS_ACCESS_KEY_ID
-              Value: !Ref AssemblyUserAccessKey
-            - Name: AWS_SECRET_ACCESS_KEY
-              Value: !GetAtt AssemblyUserAccessKey.SecretAccessKey
             - Name: SRC_DIR
               Value: !Sub '${EfsRootPath}/${SourcePath}'
             - Name: TMP_DIR
@@ -605,7 +634,15 @@ Resources:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
               ReadOnly: false
+            - SourceVolume: logging-volume
+              ContainerPath: /var/tmp/
+              ReadOnly: false
           ReadonlyRootFilesystem: true
+          Secrets:
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AssemblyUserIdParameter}'
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AssemblyUserKeyParameter}'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -636,6 +673,7 @@ Resources:
             AuthorizationConfig:
               AccessPointId: !Ref EfsAccessPointId
               IAM: DISABLED
+        - Name: logging-volume
 
 Outputs:
   AssemblyArn:

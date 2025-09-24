@@ -88,11 +88,20 @@ Resources:
                   - 'ecr:GetDownloadUrlForLayer'
                   - 'ecr:BatchGetImage'
                 Resource: 
-                  - !Sub arn:aws:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+                  - !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
               - Effect: Allow
                 Action:
                   - 'ecr:GetAuthorizationToken'
                 Resource: '*'
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameters'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}/*
 
   DiscoveryUser:
     Type: AWS::IAM::User
@@ -140,12 +149,12 @@ Resources:
                   - 's3:GetObject'
                   - 's3:DeleteObject'
                 Resource:
-                  - !Sub arn:aws:s3:::${SourceBucketName}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${SourceBucketName}/*
               - Effect: Allow
                 Action: 
                   - 's3:ListBucket'
                 Resource: 
-                  - !Sub arn:aws:s3:::${SourceBucketName}
+                  - !Sub arn:${AWS::Partition}:s3:::${SourceBucketName}
         - PolicyName: IiifBucketPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -154,7 +163,7 @@ Resources:
                 Action:
                   - 's3:PutObject'
                 Resource:
-                  - !Sub arn:aws:s3:::${IiifBucketName}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${IiifBucketName}/*
 
   DiscoverySnsRole:
     Type: AWS::IAM::Role
@@ -199,6 +208,30 @@ Resources:
           Value: !Ref Workload
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
+
+  DiscoveryUserIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key ID for DiscoveryUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_ACCESS_KEY_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DiscoveryUserAccessKey
+
+  DiscoveryUserKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key for DiscoveryUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_SECRET_ACCESS_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !GetAtt DiscoveryUserAccessKey.SecretAccessKey
   
   DiscoveryEcsTask:
     Type: AWS::ECS::TaskDefinition
@@ -214,10 +247,6 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
-            - Name: AWS_ACCESS_KEY_ID
-              Value: !Ref DiscoveryUserAccessKey
-            - Name: AWS_SECRET_ACCESS_KEY
-              Value: !GetAtt DiscoveryUserAccessKey.SecretAccessKey
             - Name: AWS_S3_ROLE_ARN
               Value: !GetAtt DiscoveryS3Role.Arn
             - Name: AWS_SNS_ROLE_ARN
@@ -237,6 +266,11 @@ Resources:
               ContainerPath: !Ref EfsRootPath
               ReadOnly: false
           ReadonlyRootFilesystem: true
+          Secrets:
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${DiscoveryUserIdParameter}'
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${DiscoveryUserKeyParameter}'
           LogConfiguration:
             LogDriver: awslogs
             Options:

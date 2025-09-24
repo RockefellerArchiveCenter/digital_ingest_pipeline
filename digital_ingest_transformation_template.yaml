@@ -361,11 +361,20 @@ Resources:
                   - 'ecr:GetDownloadUrlForLayer'
                   - 'ecr:BatchGetImage'
                 Resource:
-                  - !Sub arn:aws:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+                  - !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
               - Effect: Allow
                 Action:
                   - 'ecr:GetAuthorizationToken'
                 Resource: '*'
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameters'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}/*
 
   TransformationUser:
     Type: AWS::IAM::User
@@ -382,6 +391,30 @@ Resources:
     Type: AWS::IAM::AccessKey
     Properties:
       UserName: !Ref TransformationUser
+  
+  TransformationUserIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key ID for TransformationUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_ACCESS_KEY_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref TransformationUserAccessKey
+
+  TransformationUserKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key for TransformationUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_SECRET_ACCESS_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !GetAtt TransformationUserAccessKey.SecretAccessKey
 
   TransformationSnsRole:
     Type: AWS::IAM::Role
@@ -436,7 +469,7 @@ Resources:
                 Action:
                   - 'ssm:GetParametersByPath'
                 Resource:
-                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
   
   TransformationS3Role:
     Type: AWS::IAM::Role
@@ -460,7 +493,7 @@ Resources:
                 Action:
                   - 's3:DeleteObject'
                 Resource:
-                  - !Sub arn:aws:s3:::${ArchivematicaTransferSourceBucket}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${ArchivematicaTransferSourceBucket}/*
 
   TransformationLogGroup:
     Type: AWS::Logs::LogGroup
@@ -487,10 +520,6 @@ Resources:
           Environment:
             - Name: ENV
               Value: !Ref ApplicationEnvironment
-            - Name: AWS_ACCESS_KEY_ID
-              Value: !Ref TransformationUserAccessKey
-            - Name: AWS_SECRET_ACCESS_KEY
-              Value: !GetAtt TransformationUserAccessKey.SecretAccessKey
             - Name: AWS_SNS_ROLE_ARN
               Value: !GetAtt TransformationSnsRole.Arn
             - Name: AWS_SSM_ROLE_ARN
@@ -499,7 +528,16 @@ Resources:
               Value: !Ref EventsTopicArn
             - Name: AWS_S3_ROLE_ARN
               Value: !GetAtt TransformationS3Role.Arn
+          MountPoints:
+            - SourceVolume: logging-volume
+              ContainerPath: /tmp
+              ReadOnly: false
           ReadonlyRootFilesystem: true
+          Secrets:
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${TransformationUserIdParameter}'
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${TransformationUserKeyParameter}'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -521,6 +559,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+      Volumes:
+        - Name: logging-volume
 
 Outputs:
   TransformationArn:
