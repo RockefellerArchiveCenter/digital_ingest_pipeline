@@ -20,21 +20,12 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  EfsId:
+  AssemblyBucketName:
     Type: String
-    Description: Identifier for temporary storage EFS.
-  EfsAccessPointId:
+    Description: Name of bucket for temporary storage.
+  EbsStorageMountPath:
     Type: String
-    Description: Identifier for temporary storage EFS access point.
-  EfsRootPath:
-    Type: String
-    Description: Root path at which EFS is mounted.
-  SourcePath:
-    Type: String
-    Description: Location in EFS mount at which source files are stored.
-  TemporaryPath:
-    Type: String
-    Description: Location in EFS mount at which files are unpacked.
+    Description: Path at which EBS volume is mounted
   EventsTopicArn:
     Type: String
     Description: ARN for events SNS Topic
@@ -577,7 +568,7 @@ Resources:
               - 'sts:AssumeRole'
       Description: 'Allows user to upload packages to S3 bucket.'
       Policies:
-        - PolicyName: AssemblySNSPolicy
+        - PolicyName: AssemblyTransferSourcePolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -589,7 +580,16 @@ Resources:
                   - !Sub arn:${AWS::Partition}:s3:::${DigitizationArchivematicaTransferSourceBucket}/*
                   - !Sub arn:${AWS::Partition}:s3:::${AvDigitizationArchivematicaTransferSourceBucket}/*
                   - !Sub arn:${AWS::Partition}:s3:::${LegacyDigitalArchivematicaTransferSourceBucket}/*
-
+        - PolicyName: AssemblyBucketPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 's3:GetObject'
+                  - 's3:DeleteObject'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${AssemblyBucketName}/*
 
   AssemblyLogGroup:
     Type: AWS::Logs::LogGroup
@@ -618,10 +618,10 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: AWS_REGION
               Value: !Ref AWS::Region
-            - Name: SRC_DIR
-              Value: !Sub '${EfsRootPath}/${SourcePath}'
-            - Name: TMP_DIR
-              Value: !Sub '${EfsRootPath}/${TemporaryPath}'
+            - Name: ASSEMBLY_BUCKET
+              Value: !Ref AssemblyBucketName
+            - Name: EBS_PATH
+              Value: !Ref EbsStorageMountPath
             - Name: SNS_ROLE_ARN
               Value: !GetAtt AssemblySnsRole.Arn
             - Name: SNS_TOPIC
@@ -631,8 +631,8 @@ Resources:
             - Name: S3_ROLE_ARN
               Value: !GetAtt AssemblyS3Role.Arn
           MountPoints:
-            - SourceVolume: efs
-              ContainerPath: !Ref EfsRootPath
+            - SourceVolume: ebs
+              ContainerPath: !Ref EbsStorageMountPath
               ReadOnly: false
             - SourceVolume: logging-volume
               ContainerPath: /var/tmp/
@@ -665,14 +665,8 @@ Resources:
         - Key: Workload
           Value: !Ref Workload
       Volumes: 
-        - Name: efs
-          EFSVolumeConfiguration:
-            FilesystemId: !Ref EfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
+        - Name: ebs
+          ConfiguredAtLaunch: true
         - Name: logging-volume
 
 Outputs:

@@ -104,10 +104,6 @@ Mappings:
     DownloadBaseurl:
       dev: https://iiif.dev.rockarch.org/pdf
       prod: https://iiif.rockarch.org/pdf
-  Efs:
-    StorageDir:
-      dev: storage
-      prod: storage
 
 Parameters:
   Environment:
@@ -117,6 +113,10 @@ Parameters:
       - dev
       - prod
     Default: dev
+  EbsStorageMountPath:
+    Type: String
+    Description: Location at which EBS storage is mounted
+    Default: "/ebs"
   ArchivematicaZodiacPlApiKey:
     Type: String
     Description: Archivematica API Key for Aurora origin.
@@ -145,52 +145,21 @@ Parameters:
 
 
 Resources:
-  # Temporary Storage
-  TemporaryStorage:
-    Type: AWS::EFS::FileSystem
-    Properties: 
-      Encrypted: true
-      FileSystemTags: 
+  # Assembly Bucket
+  AssemblyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
         - Key: Environment
           Value: !Ref Environment
-        - Key: Application
-          Value: digital-ingest-temporary-storage
         - Key: Workload
           Value: !Ref Workload
-      LifecyclePolicies:
-        - TransitionToIA: AFTER_30_DAYS
-      PerformanceMode: generalPurpose
-      ThroughputMode: elastic
-  
-  MountTargetResource1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref TemporaryStorage
-      SubnetId: !FindInMap [DeployResources, Subnet, !Ref Environment]
-      SecurityGroups:
-      - !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
-
-  # Temporary Storage Access Point
-  TemporaryStorageAccessPoint:
-    Type: 'AWS::EFS::AccessPoint'
-    Properties:
-      AccessPointTags:
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Application
-          Value: digital-ingest-temporary-storage
-        - Key: Workload
-          Value: !Ref Workload
-      FileSystemId: !Ref TemporaryStorage
-      PosixUser:
-        Uid: "1000"
-        Gid: "1000"
-      RootDirectory:
-        CreationInfo:
-          OwnerGid: "1000"
-          OwnerUid: "1000"
-          Permissions: "755"
-        Path: "/digital-ingest"
+      BucketName: !Sub rac-${Environment}-digital-ingest-assembly
+      PublicAccessBlockConfiguration: 
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
 
   # ECS Cluster
   DigitalIngestECSCluster:
@@ -226,12 +195,9 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_discovery
-        EfsId: !Ref TemporaryStorage
-        EfsAccessPointId: !Ref TemporaryStorageAccessPoint
-        EfsRootPath: '/efs'
+        AssemblyBucketName: !Ref AssemblyBucket
+        EbsStorageMountPath: !Ref EbsStorageMountPath
         EventsTopicArn: !Ref DigitalIngestTopic
-        StoragePath: !FindInMap [Efs, StorageDir, !Ref Environment]
-        TemporaryPath: 'digital_ingest_discovery_tmp'
         SourceBucketName: !Sub rac-${Environment}-digital-ingest-upload
         IiifBucketName: !FindInMap [DiscoveryService, IiifBucketName, !Ref Environment]
         Workload: !Ref Workload
@@ -252,11 +218,8 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_assembly
-        EfsId: !Ref TemporaryStorage
-        EfsAccessPointId: !Ref TemporaryStorageAccessPoint
-        EfsRootPath: '/efs'
-        SourcePath: !FindInMap [Efs, StorageDir, !Ref Environment]
-        TemporaryPath: assembly_tmp
+        AssemblyBucketName: !Ref AssemblyBucket
+        EbsStorageMountPath: !Ref EbsStorageMountPath
         EventsTopicArn: !Ref DigitalIngestTopic
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
         AuroraArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey

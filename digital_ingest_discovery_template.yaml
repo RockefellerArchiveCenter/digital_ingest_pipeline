@@ -18,21 +18,12 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
-  EfsId:
+  AssemblyBucketName:
     Type: String
-    Description: Identifier for temporary storage EFS.
-  EfsAccessPointId:
+    Description: Name of bucket for temporary storage.
+  EbsStorageMountPath:
     Type: String
-    Description: Identifier for temporary storage EFS access point.
-  EfsRootPath:
-    Type: String
-    Description: Root path at which EFS is mounted.
-  StoragePath:
-    Type: String
-    Description: Location in EFS mount at which source files are stored.
-  TemporaryPath:
-    Type: String
-    Description: Location in EFS mount at which files are unpacked.
+    Description: Path at which EBS volume is mounted
   SourceBucketName:
     Type: String 
     Description: Name of S3 bucket to which source files are uploadad.
@@ -164,6 +155,7 @@ Resources:
                   - 's3:PutObject'
                 Resource:
                   - !Sub arn:${AWS::Partition}:s3:::${IiifBucketName}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${AssemblyBucketName}/*
 
   DiscoverySnsRole:
     Type: AWS::IAM::Role
@@ -251,10 +243,10 @@ Resources:
               Value: !GetAtt DiscoveryS3Role.Arn
             - Name: AWS_SNS_ROLE_ARN
               Value: !GetAtt DiscoverySnsRole.Arn
-            - Name: STORAGE_DIR
-              Value: !Sub '${EfsRootPath}/${StoragePath}'
-            - Name: TMP_DIR
-              Value: !Sub '${EfsRootPath}/${TemporaryPath}'
+            - Name: AWS_ASSEMBLY_BUCKET
+              Value: !Ref AssemblyBucketName
+            - Name: EBS_PATH
+              Value: !Ref EbsStorageMountPath
             - Name: AWS_SOURCE_BUCKET
               Value: !Ref SourceBucketName
             - Name: AWS_SNS_TOPIC
@@ -262,8 +254,8 @@ Resources:
             - Name: AWS_IIIF_BUCKET
               Value: !Ref IiifBucketName
           MountPoints:
-            - SourceVolume: efs
-              ContainerPath: !Ref EfsRootPath
+            - SourceVolume: ebs
+              ContainerPath: !Ref EbsStorageMountPath
               ReadOnly: false
           ReadonlyRootFilesystem: true
           Secrets:
@@ -293,15 +285,8 @@ Resources:
         - Key: Workload
           Value: !Ref Workload
       Volumes: 
-        - Name: efs
-          EFSVolumeConfiguration:
-            FilesystemId: !Ref EfsId
-            RootDirectory: /
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED
-
+        - Name: ebs
+          ConfiguredAtLaunch: true
 Outputs:
   DiscoveryArn:
     Description: Discovery ECS Task Definition ARN
