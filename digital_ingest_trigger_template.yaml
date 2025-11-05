@@ -23,6 +23,10 @@ Parameters:
   ECSSecurityGroupName:
     Type: AWS::EC2::SecurityGroup::Id
     Description: Name of the security group for the Task.
+  ExpansionRatio:
+    Type: String
+    Description: Expansion ratio for compressed files
+    Default: 4.0
   ParentStackName:
     Type: String
     Description: Name of the parent stack
@@ -97,6 +101,15 @@ Resources:
                 Condition:
                   StringLike:
                     'iam:PassedToService': 'ecs-tasks.amazonaws.com'
+              - Effect: Allow
+                Action: 
+                  - 'ecs:ListTasks'
+                Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:container-instance/${ECSClusterName}/*'
+              - Effect: Allow
+                Action: 'ecs:ExecuteCommand'
+                Resource: 
+                  - !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSClusterName}
+                  - !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/${ECSClusterName}/*
         - PolicyName: DigitalIngestTriggerParameterStorePolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -125,6 +138,17 @@ Resources:
                   - 'sqs:DeleteMessage'
                   - 'sqs:GetQueueAttributes'
                 Resource: !Ref TriggerQueueArn
+        - PolicyName: PassEcsInfrastructureRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'iam:PassRole'
+                Resource: !GetAtt EcsInfrastructureRole.Arn
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: ecs.amazonaws.com
 
   ECSClusterParam:
     Type: AWS::SSM::Parameter
@@ -162,6 +186,43 @@ Resources:
         Workload: !Ref Workload
       Type: String
       Value: !Ref ECSSecurityGroupName
+  ExpansionRatioParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Ratio at which uncompressed packages expand
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/EXPANSION_RATIO
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ExpansionRatio
+  EbsVolumeRole:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: IAM role which allows ECS to configure volumes
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/EBS_VOLUME_ROLE
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !GetAtt EcsInfrastructureRole.Arn
+  
+  EcsInfrastructureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes
 
   DigitalIngestTriggerFunction:
     Type: AWS::Lambda::Function
