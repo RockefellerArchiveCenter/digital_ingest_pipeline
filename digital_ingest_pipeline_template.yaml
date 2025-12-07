@@ -25,10 +25,6 @@ Mappings:
     ECSSecurityGroupName:
       dev: sg-0f98d77d7bb7b4ce6
       prod: sg-001d3c3a6ebf7b28a
-  DiscoveryService:
-    IiifBucketName:
-      dev: "rac-dev-iiif-upload"
-      prod: "rac-prod-iiif-upload"
   Zodiac:
     Baseurl:
       dev: "https://zodiac-backend.dev.rockarch.org/"
@@ -104,6 +100,16 @@ Mappings:
     DownloadBaseurl:
       dev: https://iiif.dev.rockarch.org/pdf
       prod: https://iiif.rockarch.org/pdf
+  Iiif:
+    BucketName:
+      dev: raciif-dev
+      prod: raciiif-prod
+    BaseUrl:
+      dev: https://iiif.dev.rockarch.org
+      prod: https://iiif.rockarch.org
+    ImageApiBaseUrl:
+      dev: https://images.dev.rockarch.org/iiif/3
+      prod: https://images.rockarch.org/iiif/3
 
 Parameters:
   Environment:
@@ -160,6 +166,22 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+  
+  # IIIF Upload Bucket
+  IIIFUploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Workload
+          Value: !Ref Workload
+      BucketName: !Sub rac-${Environment}-iiif-upload
+      PublicAccessBlockConfiguration: 
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
 
   # ECS Cluster
   DigitalIngestECSCluster:
@@ -199,7 +221,7 @@ Resources:
         EbsStorageMountPath: !Ref EbsStorageMountPath
         EventsTopicArn: !Ref DigitalIngestTopic
         SourceBucketName: !Sub rac-${Environment}-digital-ingest-upload
-        IiifBucketName: !FindInMap [DiscoveryService, IiifBucketName, !Ref Environment]
+        IiifBucketName: !Ref IIIFUploadBucket
         Workload: !Ref Workload
 
   # Assembly ECS Task
@@ -286,6 +308,56 @@ Resources:
         AuroraPackageCompleteStatus: !FindInMap [Aurora, PackageCompleteStatus, !Ref Environment]
         IiifManifestBaseurl: !FindInMap [Dimes, IiifManifestBaseurl, !Ref Environment]
         DownloadBaseurl: !FindInMap [Dimes, DownloadBaseurl, !Ref Environment]
+        Workload: !Ref Workload
+  
+  # IIIF Derivatives ECS Task
+  IiifDerivativesTask:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/",
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "iiif_derivatives.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: iiif_derivatives
+        EbsStorageMountPath: !Ref EbsStorageMountPath
+        SourceBucketName: !Ref IIIFUploadBucket
+        DestinationBucketName: !FindInMap [Iiif, BucketName, !Ref Environment]
+        EventsTopicArn: !Ref DigitalIngestTopic
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
+        Workload: !Ref Workload
+
+  # IIIF Manifests ECS Task
+  IiifManifestsTask:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/",
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
+          "iiif_manifests.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref Environment
+        ApplicationName: iiif_manifests
+        ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
+        ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
+        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
+        ArchivesSpaceRepoId: !FindInMap [ArchivesSpace, RepoId, !Ref Environment]
+        DestinationBucketName: !FindInMap [Iiif, BucketName, !Ref Environment]
+        EventsTopicArn: !Ref DigitalIngestTopic
+        IiifUrl: !FindInMap [Iiif, BaseUrl, !Ref Environment]
+        IiifImageApiBaseurl: [Iiif, ImageApiBaseUrl, !Ref Environment]
+        ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
         Workload: !Ref Workload
 
   # SNS topic

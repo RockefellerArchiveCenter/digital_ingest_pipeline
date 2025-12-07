@@ -1,0 +1,270 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  iiif-derivatives
+
+  Creates IIIF derivatives.
+
+Parameters:
+  ContainerAccountId:
+    Type: String
+    Description: Account ID under which container repository is located.
+    Default: "817658541382"
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  EbsStorageMountPath:
+    Type: String
+    Description: Path at which EBS volume is mounted
+  SourceBucketName:
+    Type: String 
+    Description: Name of S3 bucket in which source packages are stored.
+  DestinationBucketName:
+    Type: String
+    Description: Name of S3 bucket to which derivatives are uploaded.
+  EventsTopicArn:
+    Type: String
+    Description: ARN for events SNS Topic.
+  ZodiacBaseurl:
+    Type: String
+    Description: Base URL for Zodiac.
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
+    
+Resources:
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 
+                  - !GetAtt DerivativesLogGroup.Arn
+        - PolicyName: EcrPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                Resource: 
+                  - !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource: '*'
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameters'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}/*
+
+  DerivativesUser:
+    Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+
+  DerivativesUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      UserName: !Ref DerivativesUser
+
+  DerivativesS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt DerivativesUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows access to S3 Buckets and publication of SNS messages.'
+      Policies:
+        - PolicyName: SourceBucketPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:DeleteObject'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${SourceBucketName}/*
+              - Effect: Allow
+                Action: 
+                  - 's3:ListBucket'
+                Resource: 
+                  - !Sub arn:${AWS::Partition}:s3:::${SourceBucketName}
+        - PolicyName: DestinationBucketPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${DestinationBucketName}/*
+        - PolicyName: DiscoverySNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref EventsTopicArn
+
+  DerivativesLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
+      RetentionInDays: 90
+
+  DerivativesUserIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key ID for DerivativesUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_ACCESS_KEY_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref DerivativesUserAccessKey
+
+  DerivativesUserKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key for DiscoveryUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_SECRET_ACCESS_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !GetAtt DerivativesUserAccessKey.SecretAccessKey
+  
+  DerivativesEcsTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Cpu: "1024"
+      Memory: "3072"
+      ContainerDefinitions: 
+        - Name: !Ref ApplicationName
+          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:${ApplicationEnvironment}"
+          Essential: true
+          Environment:  
+            - Name: ENV
+              Value: !Ref ApplicationEnvironment
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_ROLE_ARN
+              Value: !GetAtt DerivativesS3Role.Arn
+            - Name: TMP_DIR
+              Value: !Ref EbsStorageMountPath
+            - Name: AWS_SOURCE_BUCKET
+              Value: !Ref SourceBucketName
+            - Name: AWS_DESTINATION_BUCKET
+              Value: !Ref DestinationBucketName
+            - Name: AWS_SNS_TOPIC
+              Value: !Ref EventsTopicArn
+            - Name: ZODIAC_BASEURL
+              Value: !Ref ZodiacBaseurl
+            - Name: MAX_IMAGE_PIXELS
+              Value: 500000000
+          MountPoints:
+            - SourceVolume: ebs
+              ContainerPath: !Ref EbsStorageMountPath
+              ReadOnly: false
+          ReadonlyRootFilesystem: true
+          Secrets:
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${DerivativesUserIdParameter}'
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${DerivativesUserKeyParameter}'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              "awslogs-group": !Ref DerivativesLogGroup
+              "awslogs-region": !Ref AWS::Region
+              "awslogs-stream-prefix": "ecs"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Family: !Ref ApplicationName
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      Volumes: 
+        - Name: ebs
+          ConfiguredAtLaunch: true
+Outputs:
+  DiscoveryArn:
+    Description: Derivatives ECS Task Definition ARN
+    Value: !Ref DerivativesEcsTask
