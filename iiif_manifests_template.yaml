@@ -60,6 +60,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -116,6 +118,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
 
   ManifestsUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -132,6 +136,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -188,6 +194,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
 
@@ -200,6 +208,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ManifestsUserAccessKey
 
@@ -212,6 +221,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !GetAtt ManifestsUserAccessKey.SecretAccessKey
   
@@ -224,6 +234,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ZodiacBaseurl
 
@@ -236,6 +247,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref IiifUrl
 
@@ -248,6 +260,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref IiifImageApiBaseurl
 
@@ -260,6 +273,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ArchivesSpaceBaseurl
 
@@ -272,6 +286,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ArchivesSpaceUsername
 
@@ -284,6 +299,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ArchivesSpacePassword
 
@@ -296,6 +312,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ArchivesSpaceRepoId
 
@@ -348,6 +365,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
 Outputs:
   DiscoveryArn:
     Description: Manifsts ECS Task Definition ARN

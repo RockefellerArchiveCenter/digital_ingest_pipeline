@@ -34,6 +34,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !GetAtt  DigitalIngestWebhookFunctionRole.Arn
   AwsSnsTopicParameter:
@@ -45,6 +46,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref NotificationsTopicArn
   ArchivematicaApiKeyParameter:
@@ -56,6 +58,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ArchivematicaApiKey
 
@@ -69,6 +72,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -133,6 +138,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
 
   DigitalIngestWebhookPermissions:
     Type: AWS::Lambda::Permission
@@ -158,6 +165,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
       RetentionInDays: 90
 

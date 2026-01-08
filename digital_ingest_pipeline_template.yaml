@@ -160,6 +160,8 @@ Resources:
           Value: !Ref Environment
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       BucketName: !Sub rac-${Environment}-digital-ingest-assembly
       PublicAccessBlockConfiguration: 
         BlockPublicAcls: true
@@ -176,6 +178,8 @@ Resources:
           Value: !Ref Environment
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       BucketName: !Sub rac-${Environment}-iiif-upload
       PublicAccessBlockConfiguration: 
         BlockPublicAcls: true
@@ -200,6 +204,8 @@ Resources:
           Value: digital-ingest-ecs-cluster
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
 
   # Discovery ECS Task
   DiscoveryTask:
@@ -371,6 +377,8 @@ Resources:
           Value: digital-ingest-sns-topic
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       TopicName: digital-ingest-notifications.fifo
       FifoTopic: true
       ContentBasedDeduplication: true
@@ -387,6 +395,8 @@ Resources:
           Value: digital-ingest-notifications-queue
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
   
   DigitalIngestNotificationsQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -419,6 +429,8 @@ Resources:
           Value: digital-ingest-notifications-queue
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
   
   DigitalIngestTriggerQueuePolicy:
     Type: AWS::SQS::QueuePolicy
