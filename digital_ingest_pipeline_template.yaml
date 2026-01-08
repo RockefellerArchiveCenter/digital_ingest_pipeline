@@ -320,7 +320,7 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "iiif_derivatives.yaml"
+          "iiif_derivatives_template.yaml"
           ]
         ]
       Parameters:
@@ -343,7 +343,7 @@ Resources:
           "https://s3.amazonaws.com",
           !FindInMap [DeployResources, CloudFormationBucket, !Ref Environment],
           !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref Environment],
-          "iiif_manifests.yaml"
+          "iiif_manifests_template.yaml"
           ]
         ]
       Parameters:
