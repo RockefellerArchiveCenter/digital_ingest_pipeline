@@ -48,6 +48,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -104,6 +106,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
 
   DiscoveryUserAccessKey:
     Type: AWS::IAM::AccessKey
@@ -120,6 +124,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -167,6 +173,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -198,6 +206,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
       RetentionInDays: 90
 
@@ -210,6 +220,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref DiscoveryUserAccessKey
 
@@ -222,6 +233,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !GetAtt DiscoveryUserAccessKey.SecretAccessKey
   
@@ -284,6 +296,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       Volumes: 
         - Name: ebs
           ConfiguredAtLaunch: true

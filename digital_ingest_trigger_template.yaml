@@ -161,6 +161,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ECSClusterName
   ECSSubnetParam:
@@ -173,6 +174,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ECSSubnetName
   ECSSecurityGroupParam:
@@ -185,6 +187,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ECSSecurityGroupName
   ExpansionRatioParameter:
@@ -196,6 +199,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !Ref ExpansionRatio
   EbsVolumeRole:
@@ -207,6 +211,7 @@ Resources:
         Environment: !Ref ApplicationEnvironment
         Application: !Ref ApplicationName
         Workload: !Ref Workload
+        WorkloadType: processing
       Type: String
       Value: !GetAtt EcsInfrastructureRole.Arn
   
@@ -251,6 +256,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
 
   S3InvokePermission:
     Type: AWS::Lambda::Permission
@@ -271,6 +278,8 @@ Resources:
           Value: !Ref ApplicationName
         - Key: Workload
           Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
       LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
       RetentionInDays: 90
 
