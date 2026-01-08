@@ -88,28 +88,29 @@ Resources:
               - Effect: Allow
                 Action: 'ecs:RunTask'
                 Resource:
-                  - !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/digital_ingest_*'
+                  - !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/digital_ingest_*'
+                  - !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/iiif_*'
               - Effect: Allow
                 Action: 'ecs:DescribeServices'
-                Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
+                Resource: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
               - Effect: Allow
                 Action: 'ecs:UpdateService'
-                Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
+                Resource: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/*'
               - Effect: Allow
                 Action: 'iam:PassRole'
-                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ParentStackName}-*'
+                Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ParentStackName}-*'
                 Condition:
                   StringLike:
                     'iam:PassedToService': 'ecs-tasks.amazonaws.com'
               - Effect: Allow
                 Action: 
                   - 'ecs:ListTasks'
-                Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:container-instance/${ECSClusterName}/*'
+                Resource: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:container-instance/${ECSClusterName}/*'
               - Effect: Allow
                 Action: 'ecs:ExecuteCommand'
                 Resource: 
-                  - !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSClusterName}
-                  - !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/${ECSClusterName}/*
+                  - !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSClusterName}
+                  - !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:task/${ECSClusterName}/*
         - PolicyName: DigitalIngestTriggerParameterStorePolicy
           PolicyDocument:
             Version: '2012-10-17'

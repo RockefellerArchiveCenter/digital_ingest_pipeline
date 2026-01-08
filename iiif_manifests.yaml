@@ -27,7 +27,7 @@ Parameters:
   ArchivesSpacePassword:
     Type: String
     Description: Password for ArchivesSpace user
-  ArchivesSpaceRepo:
+  ArchivesSpaceRepoId:
     Type: String
     Description: Repository ID for ArchivesSpace
   DestinationBucketName:
@@ -168,6 +168,15 @@ Resources:
                   - 'sns:Publish'
                 Resource:
                   - !Ref EventsTopicArn
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
 
   ManifestsLogGroup:
     Type: AWS::Logs::LogGroup
@@ -288,7 +297,7 @@ Resources:
         Application: !Ref ApplicationName
         Workload: !Ref Workload
       Type: String
-      Value: !Ref ArchivesSpaceRepo
+      Value: !Ref ArchivesSpaceRepoId
 
   ManifestsEcsTask:
     Type: AWS::ECS::TaskDefinition

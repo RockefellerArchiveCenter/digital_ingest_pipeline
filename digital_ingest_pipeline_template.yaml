@@ -356,7 +356,7 @@ Resources:
         DestinationBucketName: !FindInMap [Iiif, BucketName, !Ref Environment]
         EventsTopicArn: !Ref DigitalIngestTopic
         IiifUrl: !FindInMap [Iiif, BaseUrl, !Ref Environment]
-        IiifImageApiBaseurl: [Iiif, ImageApiBaseUrl, !Ref Environment]
+        IiifImageApiBaseurl: !FindInMap [Iiif, ImageApiBaseUrl, !Ref Environment]
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
         Workload: !Ref Workload
 
