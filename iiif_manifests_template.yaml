@@ -1,0 +1,354 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  iiif-manifests
+
+  Creates IIIF Presentation manifests.
+
+Parameters:
+  ContainerAccountId:
+    Type: String
+    Description: Account ID under which container repository is located.
+    Default: "817658541382"
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  ArchivesSpaceBaseurl:
+    Type: String
+    Description: Base URL for ArchivesSpace
+  ArchivesSpaceUsername:
+    Type: String 
+    Description: Username for ArchivesSpace
+  ArchivesSpacePassword:
+    Type: String
+    Description: Password for ArchivesSpace user
+  ArchivesSpaceRepoId:
+    Type: String
+    Description: Repository ID for ArchivesSpace
+  DestinationBucketName:
+    Type: String
+    Description: Name of S3 bucket in which IIIF manifests are to be stored.
+  EventsTopicArn:
+    Type: String
+    Description: ARN for events SNS Topic.
+  IiifUrl:
+    Type: String
+    Description: Base URL for IIIF implementation
+  IiifImageApiBaseurl:
+    Type: String 
+    Description: Base URL for IIIF Image API
+  ZodiacBaseurl:
+    Type: String
+    Description: Base URL for Zodiac
+  Workload:
+    Type: String
+    Description: Name of workload for this stack.
+
+Resources:
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 
+                  - !GetAtt ManifestsLogGroup.Arn
+        - PolicyName: EcrPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                Resource: 
+                  - !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${ContainerAccountId}:repository/${ApplicationName}
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource: '*'
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameters'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}/*
+
+  ManifestsUser:
+    Type: AWS::IAM::User
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+
+  ManifestsUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      UserName: !Ref ManifestsUser
+
+  ManifestsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt ManifestsUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Allows access to S3 Buckets and publication of SNS messages.'
+      Policies:
+        - PolicyName: DestinationBucketPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:DeleteObject'
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${DestinationBucketName}/*
+              - Effect: Allow
+                Action: 
+                  - 's3:ListBucket'
+                Resource: 
+                  - !Sub arn:${AWS::Partition}:s3:::${DestinationBucketName}
+        - PolicyName: SNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref EventsTopicArn
+        - PolicyName: SSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath'
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+
+  ManifestsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+      LogGroupName: !Sub "/rac/${ApplicationEnvironment}/digital_ingest/ecs/${ApplicationName}"
+      RetentionInDays: 90
+
+  ManifestsUserIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key ID for ManifestsUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_ACCESS_KEY_ID
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ManifestsUserAccessKey
+
+  ManifestsUserKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Secret Access Key for ManifestsUser.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AWS_SECRET_ACCESS_KEY
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !GetAtt ManifestsUserAccessKey.SecretAccessKey
+  
+  ZodiacBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for Zodiac
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ZODIAC_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ZodiacBaseurl
+
+  IiifUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for IIIF assets.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/IIIF_URL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref IiifUrl
+
+  IiifImageApiBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for IIIF Image API.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/IIIF_IMAGE_API_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref IiifImageApiBaseurl
+
+  AsBaseurlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Base URL for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpaceBaseurl
+
+  AsUsernameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Username for ArchivesSpace.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_USERNAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpaceUsername
+
+  AsPasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: Password for ArchivesSpace user.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_PASSWORD
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpacePassword
+
+  AsRepoParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ArchivesSpace repository ID.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_REPO
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+        Workload: !Ref Workload
+      Type: String
+      Value: !Ref ArchivesSpaceRepoId
+
+  ManifestsEcsTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Cpu: "1024"
+      Memory: "3072"
+      ContainerDefinitions: 
+        - Name: !Ref ApplicationName
+          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:${ApplicationEnvironment}"
+          Essential: true
+          Environment:
+            - Name: ENV
+              Value: !Ref ApplicationEnvironment
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_ROLE_ARN
+              Value: !GetAtt ManifestsRole.Arn
+            - Name: AWS_DESTINATION_BUCKET
+              Value: !Ref DestinationBucketName
+            - Name: AWS_SNS_TOPIC
+              Value: !Ref EventsTopicArn
+            - Name: APP_CONFIG_PATH
+              Value: !Ref ApplicationName
+          ReadonlyRootFilesystem: true
+          Secrets:
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ManifestsUserIdParameter}'
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ManifestsUserKeyParameter}'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              "awslogs-group": !Ref ManifestsLogGroup
+              "awslogs-region": !Ref AWS::Region
+              "awslogs-stream-prefix": "ecs"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Family: !Ref ApplicationName
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+Outputs:
+  DiscoveryArn:
+    Description: Manifsts ECS Task Definition ARN
+    Value: !Ref ManifestsEcsTask
