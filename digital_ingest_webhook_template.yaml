@@ -20,6 +20,15 @@ Parameters:
   ArchivematicaApiKey:
     Type: String
     Description: API key that will be delivered with webhook requests
+  SecurityGroup:
+    Type: String
+    Description: ARN for security group.
+  Subnet:
+    Type: String
+    Description: ARN for subnet.
+  VpcId:
+    Type: String
+    Description: Identifier for VPC in which this infrastructure should sit.
   Workload:
     Type: String
     Description: Name of workload for this stack.
@@ -92,7 +101,7 @@ Resources:
               - Effect: Allow
                 Action: 
                   - 'ssm:GetParametersByPath*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}*'
+                Resource: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}*'
         - PolicyName: DigitalIngestWebhookLogPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -111,6 +120,19 @@ Resources:
                 Action: 
                   - 'sns:Publish'
                 Resource: !Ref NotificationsTopicArn
+        - PolicyName: DigitalIngestWebhookEc2Policy
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "ec2:CreateNetworkInterface"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DescribeSubnets"
+                  - "ec2:DeleteNetworkInterface"
+                  - "ec2:AssignPrivateIpAddresses"
+                  - "ec2:UnassignPrivateIpAddresses"
+                Resource: "*"
 
   DigitalIngestWebhookFunction:
     Type: AWS::Lambda::Function
@@ -131,6 +153,11 @@ Resources:
           APP_CONFIG_PATH: !Ref ApplicationName
       Architectures:
         - x86_64
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet
       Tags:
         - Key: Environment
           Value: !Ref ApplicationEnvironment
@@ -141,19 +168,100 @@ Resources:
         - Key: WorkloadType
           Value: processing
 
-  DigitalIngestWebhookPermissions:
+  DigitalIngestWebhookFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
+      Action: lambda:InvokeFunction
       FunctionName: !Ref DigitalIngestWebhookFunction
-      Action: lambda:InvokeFunctionUrl
-      Principal: "*"
-      FunctionUrlAuthType: NONE
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebhookApiGateway}/*
 
-  DigitalIngestWebhookUrl:
-    Type: AWS::Lambda::Url
+  WebhookApiGateway:
+    Type: AWS::ApiGateway::RestApi
     Properties:
-      AuthType: NONE
-      TargetFunctionArn: !Ref DigitalIngestWebhookFunction
+      EndpointAccessMode: STRICT
+      EndpointConfiguration:
+        IpAddressType: dualstack
+        Types: 
+          - PRIVATE
+      Name: webhook-api
+      Policy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Deny
+            Principal: "*"
+            Action: "execute-api:Invoke"
+            Resource: "execute-api:/*"
+            Condition:
+              StringNotEquals:
+                aws:SourceVpc: !Ref VpcId
+          - Effect: Allow
+            Principal: "*"
+            Action: "execute-api:Invoke"
+            Resource: "execute-api:/*"
+      SecurityPolicy: SecurityPolicy_TLS13_1_2_2021_06
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
+
+  WebhookApiGatewayRootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt DigitalIngestWebhookFunction.Arn
+      ResourceId: !GetAtt WebhookApiGateway.RootResourceId
+      RestApiId: !Ref WebhookApiGateway 
+
+  WebhookApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - WebhookApiGatewayRootMethod
+    Properties:
+      RestApiId: !Ref WebhookApiGateway
+      StageName: !Ref ApplicationEnvironment
+
+  WebhookVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 'execute-api:Invoke'
+            Principal: "*"
+            Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebhookApiGateway}/*
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      ServiceName: com.amazonaws.us-east-1.execute-api
+      ServiceRegion: us-east-1
+      SubnetIds:
+        - !Ref Subnet
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: Workload
+          Value: !Ref Workload
+        - Key: WorkloadType
+          Value: processing
+        - Key: Name
+          Value: digital-ingest-webhook-endpoint
 
   WebhookLogGroup:
     Type: AWS::Logs::LogGroup
