@@ -144,6 +144,9 @@ Parameters:
   AuroraOauthClientSecret:
     Type: String
     Description: Aurora OAuth Client Secret.
+  VpcId:
+    Type: String
+    Description: ID for VPC in which webhook should be deployed.
   Workload:
     Type: String
     Default: digital_ingest_pipeline
@@ -537,4 +540,7 @@ Resources:
         ApplicationName: digital_ingest_webhook
         ArchivematicaApiKey: !Ref ArchivematicaCallbackApiKey
         NotificationsTopicArn: !Ref DigitalIngestTopic
+        SecurityGroup: !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
+        Subnet: !FindInMap [DeployResources, Subnet, !Ref Environment]
+        VpcId: !Ref VpcId
         Workload: !Ref Workload
