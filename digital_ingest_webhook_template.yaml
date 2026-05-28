@@ -259,7 +259,6 @@ Resources:
             Principal: "*"
             Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebhookApiGateway}/*
       SecurityGroupIds:
-        - !Ref SecurityGroup
         - !Ref WebhookEndpointSecurityGroup
       ServiceName: com.amazonaws.us-east-1.execute-api
       ServiceRegion: us-east-1
