@@ -22,10 +22,10 @@ Parameters:
     Description: API key that will be delivered with webhook requests
   SecurityGroup:
     Type: String
-    Description: ARN for security group.
+    Description: Security Group ID.
   Subnet:
     Type: String
-    Description: ARN for subnet.
+    Description: Subnet ID.
   VpcId:
     Type: String
     Description: Identifier for VPC in which this infrastructure should sit.
@@ -232,6 +232,21 @@ Resources:
       RestApiId: !Ref WebhookApiGateway
       StageName: !Ref ApplicationEnvironment
 
+  WebhookEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Allow HTTPS inbound traffic from 10.0.2.0/24'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 443
+          CidrIp: 10.0.2.0/24
+          Description: 'Allow HTTPS from digital ingest subnet'
+      Tags:
+        - Key: Name
+          Value: digital-ingest-webhook-sg
+
   WebhookVpcEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -245,6 +260,7 @@ Resources:
             Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${WebhookApiGateway}/*
       SecurityGroupIds:
         - !Ref SecurityGroup
+        - !Ref WebhookEndpointSecurityGroup
       ServiceName: com.amazonaws.us-east-1.execute-api
       ServiceRegion: us-east-1
       SubnetIds:
