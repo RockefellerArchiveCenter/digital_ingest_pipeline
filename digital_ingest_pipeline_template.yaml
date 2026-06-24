@@ -226,6 +226,9 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_discovery
+        ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
+        ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
+        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
         AssemblyBucketName: !Ref AssemblyBucket
         EbsStorageMountPath: !Ref EbsStorageMountPath
         EventsTopicArn: !Ref DigitalIngestTopic
