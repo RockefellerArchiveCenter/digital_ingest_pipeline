@@ -18,6 +18,15 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
+  ArchivesSpaceBaseurl:
+    Type: String
+    Description: Base URL for ArchivesSpace.
+  ArchivesSpaceUsername:
+    Type: String
+    Description: Username for ArchivesSpace.
+  ArchivesSpacePassword:
+    Type: String
+    Description: Password for ArchivesSpace.
   AssemblyBucketName:
     Type: String
     Description: Name of bucket for temporary storage.
@@ -249,6 +258,12 @@ Resources:
           Environment:
             - Name: ENV
               Value: !Ref ApplicationEnvironment
+            - Name: AS_BASEURL
+              Value: !Ref ArchivesSpaceBaseurl
+            - Name: AS_USERNAME
+              Value: !Ref ArchivesSpaceUsername
+            - Name: AS_PASSWORD
+              Value: !Ref ArchivesSpacePassword
             - Name: AWS_REGION
               Value: !Ref AWS::Region
             - Name: AWS_S3_ROLE_ARN
