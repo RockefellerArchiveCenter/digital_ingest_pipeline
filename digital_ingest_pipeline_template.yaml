@@ -123,27 +123,6 @@ Parameters:
     Type: String
     Description: Location at which EBS storage is mounted
     Default: "/ebs"
-  ArchivematicaZodiacPlApiKey:
-    Type: String
-    Description: Archivematica API Key for Aurora origin.
-  ArchivematicaMainPlApiKey:
-    Type: String
-    Description: Archivematica API Key for digitization origin.
-  ArchivematicaStorageServiceApiKey:
-    Type: String
-    Description: Archivematica Storage Service API Key.
-  ArchivesSpaceTransformationPassword:
-    Type: String
-    Description: ArchivesSpace password for user associated with transformation service.
-  AuroraOauthClientId:
-    Type: String
-    Description: Aurora OAuth Client ID.
-  AuroraOauthClientSecret:
-    Type: String
-    Description: Aurora OAuth Client Secret.
-  VpcId:
-    Type: String
-    Description: ID for VPC in which webhook should be deployed.
   Workload:
     Type: String
     Default: digital_ingest_pipeline
@@ -225,7 +204,7 @@ Resources:
         ApplicationName: digital_ingest_discovery
         ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
         ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
-        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
+        ArchivesSpacePassword: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivesSpaceTransformationPassword}}'
         AssemblyBucketName: !Ref AssemblyBucket
         EbsStorageMountPath: !Ref EbsStorageMountPath
         EventsTopicArn: !Ref DigitalIngestTopic
@@ -253,25 +232,25 @@ Resources:
         EbsStorageMountPath: !Ref EbsStorageMountPath
         EventsTopicArn: !Ref DigitalIngestTopic
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
-        AuroraArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey
+        AuroraArchivematicaApiKey: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivematicaZodiacPlApiKey}}'
         AuroraArchivematicaUserName: !FindInMap [Archivematica, ZodiacPlUsername, !Ref Environment]
         AuroraArchivematicaUrl: !FindInMap [Archivematica, ZodiacPlUrl, !Ref Environment]
         AuroraArchivematicaTransferSourceBucket: !FindInMap [Archivematica, ZodiacPlTransferSourceBucket, !Ref Environment]
         AuroraArchivematicaTransferSourcePath: !FindInMap [Archivematica, ZodiacPlTransferSourcePath, !Ref Environment]
         AuroraArchivematicaProcessingConfig: !FindInMap [Archivematica, ZodiacPlProcessingConfig, !Ref Environment]
-        DigitizationArchivematicaApiKey: !Ref ArchivematicaMainPlApiKey
+        DigitizationArchivematicaApiKey: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivematicaMainPlApiKey}}'
         DigitizationArchivematicaUserName: !FindInMap [Archivematica,MainPlUsername, !Ref Environment]
         DigitizationArchivematicaUrl: !FindInMap [Archivematica, MainPlUrl, !Ref Environment]
         DigitizationArchivematicaTransferSourceBucket: !FindInMap [Archivematica, MainPlTransferSourceBucket, !Ref Environment]
         DigitizationArchivematicaTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
         DigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, MainPlProcessingConfig, !Ref Environment]
-        AvDigitizationArchivematicaApiKey: !Ref ArchivematicaMainPlApiKey
+        AvDigitizationArchivematicaApiKey: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivematicaMainPlApiKey}}'
         AvDigitizationArchivematicaUserName: !FindInMap [Archivematica, MainPlUsername, !Ref Environment]
         AvDigitizationArchivematicaUrl: !FindInMap [Archivematica, MainPlUrl, !Ref Environment]
         AvDigitizationArchivematicaTransferSourceBucket: !FindInMap [Archivematica, MainPlTransferSourceBucket, !Ref Environment]
         AvDigitizationArchivematicaTransferSourcePath: !FindInMap [Archivematica, MainPlTransferSourcePath, !Ref Environment]
         AvDigitizationArchivematicaProcessingConfig: !FindInMap [Archivematica, MainPlProcessingConfig, !Ref Environment]
-        LegacyDigitalArchivematicaApiKey: !Ref ArchivematicaZodiacPlApiKey
+        LegacyDigitalArchivematicaApiKey: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivematicaZodiacPlApiKey}}'
         LegacyDigitalArchivematicaUserName: !FindInMap [Archivematica, ZodiacPlUsername, !Ref Environment]
         LegacyDigitalArchivematicaUrl: !FindInMap [Archivematica, ZodiacPlUrl, !Ref Environment]
         LegacyDigitalArchivematicaTransferSourceBucket: !FindInMap [Archivematica, ZodiacPlTransferSourceBucket, !Ref Environment]
@@ -296,7 +275,7 @@ Resources:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_transformation
         EventsTopicArn: !Ref DigitalIngestTopic
-        ArchivematicaSsApiKey: !Ref ArchivematicaStorageServiceApiKey
+        ArchivematicaSsApiKey: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivematicaStorageServiceApiKey}}'
         ArchivematicaSsUserName: !FindInMap [ArchivematicaStorageService, Username, !Ref Environment]
         ArchivematicaSsUrl: !FindInMap [ArchivematicaStorageService, Baseurl, !Ref Environment]
         ArchivematicaTransferSourceBucket: !FindInMap [ArchivematicaStorageService, TransferSourceBucket, !Ref Environment]
@@ -307,12 +286,12 @@ Resources:
         ZodiacBaseurl: !FindInMap [Zodiac, Baseurl, !Ref Environment]
         ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
         ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
-        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
+        ArchivesSpacePassword: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivesSpaceTransformationPassword}}'
         ArchivesSpaceRepoId: !FindInMap [ArchivesSpace, RepoId, !Ref Environment]
         AuroraBaseurl: !FindInMap [Aurora, Baseurl, !Ref Environment]
         AuroraOauthClientBaseurl: !FindInMap [Aurora, OauthClientBaseurl, !Ref Environment]
-        AuroraOauthClientId: !Ref AuroraOauthClientId
-        AuroraOauthClientSecret: !Ref AuroraOauthClientSecret
+        AuroraOauthClientId: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:AuroraOauthClientId}}'
+        AuroraOauthClientSecret: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:AuroraOauthClientSecret}}'
         AuroraAccessionStartedStatus: !FindInMap [Aurora, AccessionStartedStatus, !Ref Environment]
         AuroraPackageCompleteStatus: !FindInMap [Aurora, PackageCompleteStatus, !Ref Environment]
         IiifManifestBaseurl: !FindInMap [Dimes, IiifManifestBaseurl, !Ref Environment]
@@ -360,7 +339,7 @@ Resources:
         ApplicationName: iiif_manifests
         ArchivesSpaceBaseurl: !FindInMap [ArchivesSpace, Baseurl, !Ref Environment]
         ArchivesSpaceUsername: !FindInMap [ArchivesSpace, Username, !Ref Environment]
-        ArchivesSpacePassword: !Ref ArchivesSpaceTransformationPassword
+        ArchivesSpacePassword: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:ArchivesSpaceTransformationPassword}}'
         ArchivesSpaceRepoId: !FindInMap [ArchivesSpace, RepoId, !Ref Environment]
         DestinationBucketName: !FindInMap [Iiif, BucketName, !Ref Environment]
         EventsTopicArn: !Ref DigitalIngestTopic
@@ -541,5 +520,5 @@ Resources:
         NotificationsTopicArn: !Ref DigitalIngestTopic
         SecurityGroup: !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
         Subnet: !FindInMap [DeployResources, Subnet, !Ref Environment]
-        VpcId: !Ref VpcId
+        VpcId: !Sub '{{resolve:secretsmanager:${Environment}/digital-ingest-pipeline-deploy:SecretString:VpcId}}'
         Workload: !Ref Workload
