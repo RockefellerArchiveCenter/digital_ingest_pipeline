@@ -17,9 +17,6 @@ Parameters:
   NotificationsTopicArn:
     Type: String
     Description: ARN for the SNS queue to post messages to.
-  ArchivematicaApiKey:
-    Type: String
-    Description: API key that will be delivered with webhook requests
   SecurityGroup:
     Type: String
     Description: Security Group ID.
@@ -58,18 +55,6 @@ Resources:
         WorkloadType: processing
       Type: String
       Value: !Ref NotificationsTopicArn
-  ArchivematicaApiKeyParameter:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Zodiac base URL.
-      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/ARCHIVEMATICA_API_KEY
-      Tags: 
-        Environment: !Ref ApplicationEnvironment
-        Application: !Ref ApplicationName
-        Workload: !Ref Workload
-        WorkloadType: processing
-      Type: String
-      Value: !Ref ArchivematicaApiKey
 
   DigitalIngestWebhookFunctionRole:
     Type: AWS::IAM::Role
