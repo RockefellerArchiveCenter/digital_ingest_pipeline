@@ -129,9 +129,6 @@ Parameters:
   ArchivematicaMainPlApiKey:
     Type: String
     Description: Archivematica API Key for digitization origin.
-  ArchivematicaCallbackApiKey:
-    Type: String
-    Description: Archivematica API Key sent in post-store requests.
   ArchivematicaStorageServiceApiKey:
     Type: String
     Description: Archivematica Storage Service API Key.
@@ -541,7 +538,6 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref Environment
         ApplicationName: digital_ingest_webhook
-        ArchivematicaApiKey: !Ref ArchivematicaCallbackApiKey
         NotificationsTopicArn: !Ref DigitalIngestTopic
         SecurityGroup: !FindInMap [DeployResources, SecurityGroup, !Ref Environment]
         Subnet: !FindInMap [DeployResources, Subnet, !Ref Environment]
